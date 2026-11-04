@@ -2,75 +2,86 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prototyp - Ocena Ryzyka Chemicznego</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ocena Ryzyka Chemicznego</title>
 
 <style>
+
 body{
-    font-family: Arial, sans-serif;
-    background:#f5f7fa;
+    font-family:Segoe UI,Arial,sans-serif;
+    background:#f4f6f9;
     margin:0;
-    padding:30px;
 }
 
 .container{
-    max-width:1000px;
+    max-width:1200px;
     margin:auto;
+    padding:20px;
 }
 
 .card{
     background:white;
+    margin-bottom:20px;
     padding:20px;
     border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,.1);
-    margin-bottom:20px;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
 }
 
 h1{
-    color:#1d4e89;
+    color:#003366;
 }
 
 h2{
-    color:#1d4e89;
+    color:#003366;
+    border-bottom:1px solid #ddd;
+    padding-bottom:8px;
 }
 
 input[type=text],
-textarea,
-select{
+input[type=number],
+select,
+textarea{
     width:100%;
     padding:10px;
     margin-top:5px;
     margin-bottom:15px;
     border:1px solid #ccc;
-    border-radius:5px;
+    border-radius:6px;
     box-sizing:border-box;
 }
 
+textarea{
+    resize:vertical;
+}
+
 button{
-    padding:10px 20px;
-    background:#1d4e89;
+    background:#005fb8;
     color:white;
     border:none;
-    border-radius:5px;
+    padding:10px 18px;
+    border-radius:6px;
     cursor:pointer;
 }
 
 button:hover{
-    background:#163d6c;
+    background:#00468a;
+}
+
+.hidden{
+    display:none;
 }
 
 .result{
-    background:#f3f8ff;
-    border-left:4px solid #1d4e89;
+    background:#eef6ff;
+    border-left:4px solid #005fb8;
     padding:15px;
     margin-top:10px;
 }
 
 .badge{
-    display:inline-block;
-    padding:5px 10px;
-    border-radius:5px;
+    padding:8px 12px;
     color:white;
+    border-radius:6px;
     font-weight:bold;
 }
 
@@ -86,12 +97,9 @@ button:hover{
     background:#c62828;
 }
 
-.hidden{
-    display:none;
-}
 </style>
-
 </head>
+
 <body>
 
 <div class="container">
@@ -100,7 +108,7 @@ button:hover{
 
 <div class="card">
 
-<h2>Pozyskanie danych</h2>
+<h2>1. Źródło danych</h2>
 
 <label>
 <input type="radio" name="source" checked onclick="toggleSource()">
@@ -111,10 +119,10 @@ button:hover{
 
 <label>
 <input type="radio" name="source" onclick="toggleSource()">
- Załącz KCh
+ Załącz KCh PDF
 </label>
 
-<div id="searchBox">
+<div id="searchSection">
 
 <br>
 
@@ -122,41 +130,79 @@ button:hover{
 <input type="text" id="productName"
 placeholder="np. Sika Cleaner-205">
 
-<button onclick="searchKCH()">Szukaj</button>
+<button onclick="searchDoc()">Wyszukaj KCh</button>
+
+<div id="searchResult"></div>
 
 </div>
 
-<div id="uploadBox" class="hidden">
+<div id="uploadSection" class="hidden">
 
 <br>
 
-<label>Załącz kartę charakterystyki PDF</label>
+<label>Załącz KCh</label>
+
 <input type="file">
 
 </div>
 
-<div id="productResult"></div>
-
 </div>
 
 <div class="card">
 
-<h2>Informacje o użytkowaniu</h2>
+<h2>2. Stanowisko pracy</h2>
 
 <label>Stanowisko</label>
-<input type="text" placeholder="np. Operator produkcji">
+<input type="text" id="jobTitle">
+
+<label>Wydział / Lokalizacja</label>
+<input type="text">
 
 <label>Opis wykonywanych czynności</label>
-<textarea rows="4"
-placeholder="np. Czyszczenie elementów przy użyciu preparatu, nanoszenie środka, przecieranie powierzchni"></textarea>
+<textarea id="activities" rows="4"></textarea>
+
+<label>Ilość zużywanej substancji</label>
+<input type="text"
+placeholder="np. 5 litrów tygodniowo">
+
+<label>Częstotliwość stosowania</label>
+
+<select>
+<option>Sporadycznie</option>
+<option>Kilka razy w miesiącu</option>
+<option>Kilka razy w tygodniu</option>
+<option>Codziennie</option>
+</select>
 
 </div>
 
 <div class="card">
 
-<h2>Analiza zagrożeń</h2>
+<h2>3. Ekspozycja</h2>
 
-<button onclick="generateAI()">Analizuj</button>
+<label>
+<input type="checkbox"> Kontakt ze skórą
+</label><br>
+
+<label>
+<input type="checkbox"> Kontakt z oczami
+</label><br>
+
+<label>
+<input type="checkbox"> Narażenie inhalacyjne
+</label><br>
+
+<label>
+<input type="checkbox"> Ryzyko połknięcia
+</label>
+
+</div>
+
+<div class="card">
+
+<h2>4. Analiza AI</h2>
+
+<button onclick="runAI()">Analizuj zagrożenia</button>
 
 <div id="aiResult"></div>
 
@@ -164,36 +210,36 @@ placeholder="np. Czyszczenie elementów przy użyciu preparatu, nanoszenie środ
 
 <div class="card">
 
-<h2>Ocena ryzyka</h2>
+<h2>5. Ocena ryzyka</h2>
 
 <label>Ciężkość skutków</label>
-<select id="severity">
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-<option value="5">5</option>
+<select id="s">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
 </select>
 
 <label>Prawdopodobieństwo</label>
-<select id="probability">
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-<option value="5">5</option>
+<select id="p">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
 </select>
 
 <label>Ekspozycja</label>
-<select id="exposure">
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-<option value="5">5</option>
+<select id="e">
+<option>1</option>
+<option>2</option>
+<option>3</option>
+<option>4</option>
+<option>5</option>
 </select>
 
-<button onclick="calculateRisk()">Oblicz ryzyko</button>
+<button onclick="calculateRisk()">Oblicz</button>
 
 <div id="riskResult"></div>
 
@@ -201,21 +247,21 @@ placeholder="np. Czyszczenie elementów przy użyciu preparatu, nanoszenie środ
 
 <div class="card">
 
-<h2>Podgląd raportu</h2>
+<h2>6. Raport końcowy</h2>
 
 <div class="result">
 
-<b>Nazwa produktu:</b> Sika Cleaner-205<br>
-<b>Stanowisko:</b> Operator produkcji<br>
-<b>Zagrożenia:</b> Kontakt ze skórą, kontakt z oczami, inhalacja par<br>
-<b>ŚOI:</b> Rękawice, okulary, wentylacja<br>
-<b>Poziom ryzyka:</b> Średnie
+<p><strong>Produkt:</strong> -</p>
+<p><strong>Stanowisko:</strong> -</p>
+<p><strong>Zagrożenia:</strong> -</p>
+<p><strong>ŚOI:</strong> -</p>
+<p><strong>Poziom ryzyka:</strong> -</p>
 
 </div>
 
 <br>
 
-<button>Generuj PDF</button>
+<button>Eksport PDF (przyszła funkcja)</button>
 
 </div>
 
@@ -225,61 +271,64 @@ placeholder="np. Czyszczenie elementów przy użyciu preparatu, nanoszenie środ
 
 function toggleSource(){
 
-const search =
-document.getElementById("searchBox");
-
-const upload =
-document.getElementById("uploadBox");
-
 const radios =
 document.getElementsByName("source");
 
 if(radios[0].checked){
-search.classList.remove("hidden");
-upload.classList.add("hidden");
+
+document.getElementById(
+"searchSection").classList.remove("hidden");
+
+document.getElementById(
+"uploadSection").classList.add("hidden");
+
 }
 else{
-upload.classList.remove("hidden");
-search.classList.add("hidden");
+
+document.getElementById(
+"uploadSection").classList.remove("hidden");
+
+document.getElementById(
+"searchSection").classList.add("hidden");
 }
 }
 
-function searchKCH(){
+function searchDoc(){
 
-let name =
-document.getElementById("productName").value;
+const product =
+document.getElementById(
+"productName").value;
 
-if(name === ""){
-alert("Wpisz nazwę produktu.");
+if(product===""){
+alert("Wpisz nazwę produktu");
 return;
 }
 
-document.getElementById("productResult").innerHTML =
+document.getElementById(
+"searchResult").innerHTML=
 
 `
 <div class="result">
 
-<b>Znaleziono kartę charakterystyki</b><br><br>
+<b>Znaleziono potencjalną kartę charakterystyki</b><br><br>
 
-Produkt: ${name}<br>
-Producent: Przykładowy producent<br>
-Wersja KCh: 2025<br>
+Produkt: ${product}<br>
+Status: znaleziono dokument PDF<br>
+Producent: do pobrania z internetu<br>
 
 <br>
 
-<b>Klasyfikacja:</b><br>
-H315 - Działa drażniąco na skórę<br>
-H319 - Działa drażniąco na oczy<br>
-H336 - Może wywoływać uczucie senności lub zawroty głowy
+<i>W wersji docelowej tutaj pojawi się wynik wyszukiwania AI.</i>
 
 </div>
 `;
 
 }
 
-function generateAI(){
+function runAI(){
 
-document.getElementById("aiResult").innerHTML =
+document.getElementById(
+"aiResult").innerHTML=
 
 `
 <div class="result">
@@ -287,61 +336,60 @@ document.getElementById("aiResult").innerHTML =
 <b>Proponowane zagrożenia</b>
 
 <ul>
-<li>Kontakt substancji ze skórą</li>
+<li>Kontakt chemiczny ze skórą</li>
 <li>Kontakt z oczami</li>
-<li>Wdychanie par</li>
-<li>Poślizgnięcie przy rozlaniu</li>
+<li>Narażenie na pary</li>
+<li>Rozlanie substancji</li>
 </ul>
 
-<b>Proponowane środki ochronne</b>
+<b>Rekomendowane środki ochrony</b>
 
 <ul>
-<li>Rękawice ochronne</li>
+<li>Rękawice nitrylowe</li>
 <li>Okulary ochronne</li>
-<li>Wentylacja stanowiska</li>
-<li>Szkolenie pracowników</li>
+<li>Wentylacja miejscowa</li>
+<li>Instrukcja bezpiecznej pracy</li>
 </ul>
 
 </div>
 `;
-
 }
 
 function calculateRisk(){
 
 let s =
-parseInt(document.getElementById("severity").value);
+parseInt(document.getElementById("s").value);
 
 let p =
-parseInt(document.getElementById("probability").value);
+parseInt(document.getElementById("p").value);
 
 let e =
-parseInt(document.getElementById("exposure").value);
+parseInt(document.getElementById("e").value);
 
 let score = s*p*e;
 
-let level = "";
-let cls = "";
+let level="";
+let cls="";
 
-if(score <= 20){
-level = "Niskie";
-cls = "low";
+if(score<=20){
+level="Niskie";
+cls="low";
 }
-else if(score <= 50){
-level = "Średnie";
-cls = "medium";
+else if(score<=50){
+level="Średnie";
+cls="medium";
 }
 else{
-level = "Wysokie";
-cls = "high";
+level="Wysokie";
+cls="high";
 }
 
-document.getElementById("riskResult").innerHTML =
+document.getElementById("riskResult").innerHTML=
 
 `
 <div class="result">
 
-Wskaźnik ryzyka: <b>${score}</b>
+Wynik: ${score}
 
 <br><br>
 
