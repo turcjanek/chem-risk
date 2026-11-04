@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototyp - Ocena Ryzyka Chemicznego</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f5f7fa;
+    margin:0;
+    padding:30px;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+}
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+    margin-bottom:20px;
+}
+
+h1{
+    color:#1d4e89;
+}
+
+h2{
+    color:#1d4e89;
+}
+
+input[type=text],
+textarea,
+select{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:15px;
+    border:1px solid #ccc;
+    border-radius:5px;
+    box-sizing:border-box;
+}
+
+button{
+    padding:10px 20px;
+    background:#1d4e89;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#163d6c;
+}
+
+.result{
+    background:#f3f8ff;
+    border-left:4px solid #1d4e89;
+    padding:15px;
+    margin-top:10px;
+}
+
+.badge{
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:5px;
+    color:white;
+    font-weight:bold;
+}
+
+.low{
+    background:#2e7d32;
+}
+
+.medium{
+    background:#f9a825;
+}
+
+.high{
+    background:#c62828;
+}
+
+.hidden{
+    display:none;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>Ocena Ryzyka Chemicznego</h1>
+
+<div class="card">
+
+<h2>Pozyskanie danych</h2>
+
+<label>
+<input type="radio" name="source" checked onclick="toggleSource()">
+ Wyszukaj KCh w internecie
+</label>
+
+<br><br>
+
+<label>
+<input type="radio" name="source" onclick="toggleSource()">
+ Załącz KCh
+</label>
+
+<div id="searchBox">
+
+<br>
+
+<label>Nazwa produktu</label>
+<input type="text" id="productName"
+placeholder="np. Sika Cleaner-205">
+
+<button onclick="searchKCH()">Szukaj</button>
+
+</div>
+
+<div id="uploadBox" class="hidden">
+
+<br>
+
+<label>Załącz kartę charakterystyki PDF</label>
+<input type="file">
+
+</div>
+
+<div id="productResult"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Informacje o użytkowaniu</h2>
+
+<label>Stanowisko</label>
+<input type="text" placeholder="np. Operator produkcji">
+
+<label>Opis wykonywanych czynności</label>
+<textarea rows="4"
+placeholder="np. Czyszczenie elementów przy użyciu preparatu, nanoszenie środka, przecieranie powierzchni"></textarea>
+
+</div>
+
+<div class="card">
+
+<h2>Analiza zagrożeń</h2>
+
+<button onclick="generateAI()">Analizuj</button>
+
+<div id="aiResult"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Ocena ryzyka</h2>
+
+<label>Ciężkość skutków</label>
+<select id="severity">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+
+<label>Prawdopodobieństwo</label>
+<select id="probability">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+
+<label>Ekspozycja</label>
+<select id="exposure">
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+
+<button onclick="calculateRisk()">Oblicz ryzyko</button>
+
+<div id="riskResult"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Podgląd raportu</h2>
+
+<div class="result">
+
+<b>Nazwa produktu:</b> Sika Cleaner-205<br>
+<b>Stanowisko:</b> Operator produkcji<br>
+<b>Zagrożenia:</b> Kontakt ze skórą, kontakt z oczami, inhalacja par<br>
+<b>ŚOI:</b> Rękawice, okulary, wentylacja<br>
+<b>Poziom ryzyka:</b> Średnie
+
+</div>
+
+<br>
+
+<button>Generuj PDF</button>
+
+</div>
+
+</div>
+
+<script>
+
+function toggleSource(){
+
+const search =
+document.getElementById("searchBox");
+
+const upload =
+document.getElementById("uploadBox");
+
+const radios =
+document.getElementsByName("source");
+
+if(radios[0].checked){
+search.classList.remove("hidden");
+upload.classList.add("hidden");
+}
+else{
+upload.classList.remove("hidden");
+search.classList.add("hidden");
+}
+}
+
+function searchKCH(){
+
+let name =
+document.getElementById("productName").value;
+
+if(name === ""){
+alert("Wpisz nazwę produktu.");
+return;
+}
+
+document.getElementById("productResult").innerHTML =
+
+`
+<div class="result">
+
+<b>Znaleziono kartę charakterystyki</b><br><br>
+
+Produkt: ${name}<br>
+Producent: Przykładowy producent<br>
+Wersja KCh: 2025<br>
+
+<br>
+
+<b>Klasyfikacja:</b><br>
+H315 - Działa drażniąco na skórę<br>
+H319 - Działa drażniąco na oczy<br>
+H336 - Może wywoływać uczucie senności lub zawroty głowy
+
+</div>
+`;
+
+}
+
+function generateAI(){
+
+document.getElementById("aiResult").innerHTML =
+
+`
+<div class="result">
+
+<b>Proponowane zagrożenia</b>
+
+<ul>
+<li>Kontakt substancji ze skórą</li>
+<li>Kontakt z oczami</li>
+<li>Wdychanie par</li>
+<li>Poślizgnięcie przy rozlaniu</li>
+</ul>
+
+<b>Proponowane środki ochronne</b>
+
+<ul>
+<li>Rękawice ochronne</li>
+<li>Okulary ochronne</li>
+<li>Wentylacja stanowiska</li>
+<li>Szkolenie pracowników</li>
+</ul>
+
+</div>
+`;
+
+}
+
+function calculateRisk(){
+
+let s =
+parseInt(document.getElementById("severity").value);
+
+let p =
+parseInt(document.getElementById("probability").value);
+
+let e =
+parseInt(document.getElementById("exposure").value);
+
+let score = s*p*e;
+
+let level = "";
+let cls = "";
+
+if(score <= 20){
+level = "Niskie";
+cls = "low";
+}
+else if(score <= 50){
+level = "Średnie";
+cls = "medium";
+}
+else{
+level = "Wysokie";
+cls = "high";
+}
+
+document.getElementById("riskResult").innerHTML =
+
+`
+<div class="result">
+
+Wskaźnik ryzyka: <b>${score}</b>
+
+<br><br>
+
+<span class="badge ${cls}">
+${level}
+</span>
+
+</div>
+`;
+
+}
+
+</script>
+
+</body>
+</html>
