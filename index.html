@@ -293,15 +293,23 @@ document.getElementById(
 }
 }
 
-function searchDoc(){
+function searchDoc() {
 
-const product =
-document.getElementById(
-"productName").value;
+    const product =
+    document.getElementById("productName").value.trim();
 
-if(product===""){
-alert("Wpisz nazwę produktu");
-return;
+    if(product === ""){
+        alert("Wpisz nazwę produktu");
+        return;
+    }
+
+    const query =
+    `"${product}" "karta charakterystyki" filetype:pdf`;
+
+    const url =
+    `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+
+    window.open(url, "_blank");
 }
 
 document.getElementById(
