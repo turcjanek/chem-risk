@@ -310,6 +310,15 @@ function searchDoc() {
     `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 
     window.open(url, "_blank");
+
+    document.getElementById("searchResult").innerHTML = `
+        <div class="result">
+            <b>Otwarto wyszukiwanie Google</b><br><br>
+            Produkt: ${product}<br>
+            Szukana fraza: karta charakterystyki PDF
+        </div>
+    `;
+}
 }
 
 document.getElementById(
