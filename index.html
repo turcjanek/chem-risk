@@ -8,7 +8,7 @@
 <style>
 
 body{
-    font-family:Segoe UI,Arial,sans-serif;
+    font-family: Segoe UI, Arial, sans-serif;
     background:#f4f6f9;
     margin:0;
 }
@@ -38,9 +38,8 @@ h2{
 }
 
 input[type=text],
-input[type=number],
-select,
-textarea{
+textarea,
+select{
     width:100%;
     padding:10px;
     margin-top:5px;
@@ -48,10 +47,6 @@ textarea{
     border:1px solid #ccc;
     border-radius:6px;
     box-sizing:border-box;
-}
-
-textarea{
-    resize:vertical;
 }
 
 button{
@@ -98,8 +93,8 @@ button:hover{
 }
 
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="container">
@@ -127,10 +122,15 @@ button:hover{
 <br>
 
 <label>Nazwa produktu</label>
-<input type="text" id="productName"
+
+<input
+type="text"
+id="productName"
 placeholder="np. Sika Cleaner-205">
 
-<button onclick="searchDoc()">Wyszukaj KCh</button>
+<button onclick="searchDoc()">
+Wyszukaj KCh
+</button>
 
 <div id="searchResult"></div>
 
@@ -140,9 +140,15 @@ placeholder="np. Sika Cleaner-205">
 
 <br>
 
-<label>Załącz KCh</label>
+<label>Załącz KCh PDF</label>
 
-<input type="file">
+<input
+type="file"
+id="pdfFile"
+accept=".pdf"
+onchange="showFileName()">
+
+<div id="fileInfo"></div>
 
 </div>
 
@@ -162,7 +168,8 @@ placeholder="np. Sika Cleaner-205">
 <textarea id="activities" rows="4"></textarea>
 
 <label>Ilość zużywanej substancji</label>
-<input type="text"
+<input
+type="text"
 placeholder="np. 5 litrów tygodniowo">
 
 <label>Częstotliwość stosowania</label>
@@ -180,29 +187,20 @@ placeholder="np. 5 litrów tygodniowo">
 
 <h2>3. Ekspozycja</h2>
 
-<label>
-<input type="checkbox"> Kontakt ze skórą
-</label><br>
-
-<label>
-<input type="checkbox"> Kontakt z oczami
-</label><br>
-
-<label>
-<input type="checkbox"> Narażenie inhalacyjne
-</label><br>
-
-<label>
-<input type="checkbox"> Ryzyko połknięcia
-</label>
+<label><input type="checkbox"> Kontakt ze skórą</label><br>
+<label><input type="checkbox"> Kontakt z oczami</label><br>
+<label><input type="checkbox"> Narażenie inhalacyjne</label><br>
+<label><input type="checkbox"> Ryzyko połknięcia</label>
 
 </div>
 
 <div class="card">
 
-<h2>4. Analiza AI</h2>
+<h2>4. Analiza AI (wersja demo)</h2>
 
-<button onclick="runAI()">Analizuj zagrożenia</button>
+<button onclick="runAI()">
+Analizuj zagrożenia
+</button>
 
 <div id="aiResult"></div>
 
@@ -213,6 +211,7 @@ placeholder="np. 5 litrów tygodniowo">
 <h2>5. Ocena ryzyka</h2>
 
 <label>Ciężkość skutków</label>
+
 <select id="s">
 <option>1</option>
 <option>2</option>
@@ -222,6 +221,7 @@ placeholder="np. 5 litrów tygodniowo">
 </select>
 
 <label>Prawdopodobieństwo</label>
+
 <select id="p">
 <option>1</option>
 <option>2</option>
@@ -231,6 +231,7 @@ placeholder="np. 5 litrów tygodniowo">
 </select>
 
 <label>Ekspozycja</label>
+
 <select id="e">
 <option>1</option>
 <option>2</option>
@@ -239,7 +240,9 @@ placeholder="np. 5 litrów tygodniowo">
 <option>5</option>
 </select>
 
-<button onclick="calculateRisk()">Oblicz</button>
+<button onclick="calculateRisk()">
+Oblicz ryzyko
+</button>
 
 <div id="riskResult"></div>
 
@@ -259,10 +262,6 @@ placeholder="np. 5 litrów tygodniowo">
 
 </div>
 
-<br>
-
-<button>Eksport PDF (przyszła funkcja)</button>
-
 </div>
 
 </div>
@@ -271,35 +270,36 @@ placeholder="np. 5 litrów tygodniowo">
 
 function toggleSource(){
 
-const radios =
-document.getElementsByName("source");
+    const radios =
+    document.getElementsByName("source");
 
-if(radios[0].checked){
+    if(radios[0].checked){
 
-document.getElementById(
-"searchSection").classList.remove("hidden");
+        document.getElementById("searchSection")
+        .classList.remove("hidden");
 
-document.getElementById(
-"uploadSection").classList.add("hidden");
+        document.getElementById("uploadSection")
+        .classList.add("hidden");
+    }
+    else{
 
+        document.getElementById("searchSection")
+        .classList.add("hidden");
+
+        document.getElementById("uploadSection")
+        .classList.remove("hidden");
+    }
 }
-else{
 
-document.getElementById(
-"uploadSection").classList.remove("hidden");
-
-document.getElementById(
-"searchSection").classList.add("hidden");
-}
-}
-
-function searchDoc() {
+function searchDoc(){
 
     const product =
-    document.getElementById("productName").value.trim();
+    document.getElementById("productName")
+    .value.trim();
 
     if(product === ""){
-        alert("Wpisz nazwę produktu");
+
+        alert("Wpisz nazwę produktu.");
         return;
     }
 
@@ -307,116 +307,112 @@ function searchDoc() {
     `"${product}" "karta charakterystyki" filetype:pdf`;
 
     const url =
-    `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    "https://www.google.com/search?q=" +
+    encodeURIComponent(query);
 
     window.open(url, "_blank");
 
-    document.getElementById("searchResult").innerHTML = `
+    document.getElementById("searchResult")
+    .innerHTML = `
         <div class="result">
-            <b>Otwarto wyszukiwanie Google</b><br><br>
+            <b>Uruchomiono wyszukiwanie Google</b><br><br>
             Produkt: ${product}<br>
-            Szukana fraza: karta charakterystyki PDF
+            Szukanie: karta charakterystyki PDF
         </div>
     `;
 }
-}
 
-document.getElementById(
-"searchResult").innerHTML=
+function showFileName(){
 
-`
-<div class="result">
+    const fileInput =
+    document.getElementById("pdfFile");
 
-<b>Znaleziono potencjalną kartę charakterystyki</b><br><br>
+    if(fileInput.files.length > 0){
 
-Produkt: ${product}<br>
-Status: znaleziono dokument PDF<br>
-Producent: do pobrania z internetu<br>
-
-<br>
-
-<i>W wersji docelowej tutaj pojawi się wynik wyszukiwania AI.</i>
-
-</div>
-`;
-
+        document.getElementById("fileInfo")
+        .innerHTML = `
+        <div class="result">
+            Wybrano plik:<br>
+            <b>${fileInput.files[0].name}</b>
+        </div>
+        `;
+    }
 }
 
 function runAI(){
 
-document.getElementById(
-"aiResult").innerHTML=
+    document.getElementById("aiResult")
+    .innerHTML = `
+    <div class="result">
 
-`
-<div class="result">
+    <b>Proponowane zagrożenia</b>
 
-<b>Proponowane zagrożenia</b>
+    <ul>
+        <li>Kontakt chemiczny ze skórą</li>
+        <li>Kontakt z oczami</li>
+        <li>Narażenie inhalacyjne</li>
+        <li>Rozlanie substancji</li>
+    </ul>
 
-<ul>
-<li>Kontakt chemiczny ze skórą</li>
-<li>Kontakt z oczami</li>
-<li>Narażenie na pary</li>
-<li>Rozlanie substancji</li>
-</ul>
+    <b>Proponowane środki ochronne</b>
 
-<b>Rekomendowane środki ochrony</b>
+    <ul>
+        <li>Rękawice nitrylowe</li>
+        <li>Okulary ochronne</li>
+        <li>Wentylacja miejscowa</li>
+        <li>Szkolenie pracowników</li>
+    </ul>
 
-<ul>
-<li>Rękawice nitrylowe</li>
-<li>Okulary ochronne</li>
-<li>Wentylacja miejscowa</li>
-<li>Instrukcja bezpiecznej pracy</li>
-</ul>
-
-</div>
-`;
+    </div>
+    `;
 }
 
 function calculateRisk(){
 
-let s =
-parseInt(document.getElementById("s").value);
+    const s =
+    parseInt(document.getElementById("s").value);
 
-let p =
-parseInt(document.getElementById("p").value);
+    const p =
+    parseInt(document.getElementById("p").value);
 
-let e =
-parseInt(document.getElementById("e").value);
+    const e =
+    parseInt(document.getElementById("e").value);
 
-let score = s*p*e;
+    const score = s * p * e;
 
-let level="";
-let cls="";
+    let level = "";
+    let cls = "";
 
-if(score<=20){
-level="Niskie";
-cls="low";
-}
-else if(score<=50){
-level="Średnie";
-cls="medium";
-}
-else{
-level="Wysokie";
-cls="high";
-}
+    if(score <= 20){
 
-document.getElementById("riskResult").innerHTML=
+        level = "Niskie";
+        cls = "low";
+    }
+    else if(score <= 50){
 
-`
-<div class="result">
+        level = "Średnie";
+        cls = "medium";
+    }
+    else{
 
-Wynik: ${score}
+        level = "Wysokie";
+        cls = "high";
+    }
 
-<br><br>
+    document.getElementById("riskResult")
+    .innerHTML = `
+    <div class="result">
 
-<span class="badge ${cls}">
-${level}
-</span>
+        Wynik: <b>${score}</b>
 
-</div>
-`;
+        <br><br>
 
+        <span class="badge ${cls}">
+            ${level}
+        </span>
+
+    </div>
+    `;
 }
 
 </script>
