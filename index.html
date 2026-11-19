@@ -3,264 +3,345 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ocena Ryzyka Chemicznego</title>
+
+<title>ChemRisk v2</title>
 
 <style>
 
 body{
-    font-family: Segoe UI, Arial, sans-serif;
-    background:#f4f6f9;
+    font-family:Segoe UI,Arial,sans-serif;
     margin:0;
+    background:#f5f6fa;
 }
 
-.container{
-    max-width:1200px;
-    margin:auto;
+header{
+    background:#003366;
+    color:white;
+    padding:15px 25px;
+}
+
+nav{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+}
+
+nav button{
+    border:none;
+    padding:10px 15px;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+.page{
+    display:none;
     padding:20px;
+}
+
+.active{
+    display:block;
 }
 
 .card{
     background:white;
-    margin-bottom:20px;
     padding:20px;
     border-radius:10px;
-    box-shadow:0 2px 6px rgba(0,0,0,.1);
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
 
-h1{
-    color:#003366;
-}
-
-h2{
-    color:#003366;
-    border-bottom:1px solid #ddd;
-    padding-bottom:8px;
-}
-
-input[type=text],
+input,
 textarea,
 select{
     width:100%;
-    padding:10px;
+    padding:8px;
     margin-top:5px;
-    margin-bottom:15px;
-    border:1px solid #ccc;
-    border-radius:6px;
+    margin-bottom:12px;
     box-sizing:border-box;
 }
 
-button{
+button.action{
     background:#005fb8;
     color:white;
     border:none;
-    padding:10px 18px;
+    padding:10px 15px;
     border-radius:6px;
     cursor:pointer;
 }
 
-button:hover{
-    background:#00468a;
+table{
+    width:100%;
+    border-collapse:collapse;
 }
 
-.hidden{
-    display:none;
+table th,
+table td{
+    border:1px solid #ddd;
+    padding:8px;
 }
 
-.result{
-    background:#eef6ff;
-    border-left:4px solid #005fb8;
-    padding:15px;
-    margin-top:10px;
+table th{
+    background:#eef4fb;
 }
 
-.badge{
-    padding:8px 12px;
-    color:white;
-    border-radius:6px;
+.status-green{
+    color:green;
     font-weight:bold;
 }
 
-.low{
-    background:#2e7d32;
+.status-yellow{
+    color:#d89000;
+    font-weight:bold;
 }
 
-.medium{
-    background:#f9a825;
+.status-red{
+    color:red;
+    font-weight:bold;
 }
 
-.high{
-    background:#c62828;
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+}
+
+.metric{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    text-align:center;
+    box-shadow:0 1px 5px rgba(0,0,0,.1);
+}
+
+.metric h3{
+    margin:0;
+    color:#003366;
+}
+
+.metric .value{
+    font-size:32px;
+    font-weight:bold;
+    margin-top:10px;
 }
 
 </style>
-
 </head>
 <body>
 
-<div class="container">
+<header>
 
-<h1>Ocena Ryzyka Chemicznego</h1>
+<h1>ChemRisk v2</h1>
+
+<nav>
+
+<button onclick="showPage('dashboard')">📊 Dashboard</button>
+
+<button onclick="showPage('products')">🧪 Produkty</button>
+
+<button onclick="showPage('jobs')">👷 Stanowiska</button>
+
+<button onclick="showPage('scenarios')">⚙️ Scenariusze</button>
+
+</nav>
+
+</header>
+
+<!-- DASHBOARD -->
+
+<div id="dashboard" class="page active">
+
+<h2>Dashboard</h2>
+
+<div class="dashboard">
+
+<div class="metric">
+<h3>Produkty</h3>
+<div id="productCount" class="value">0</div>
+</div>
+
+<div class="metric">
+<h3>Stanowiska</h3>
+<div id="jobCount" class="value">0</div>
+</div>
+
+<div class="metric">
+<h3>Scenariusze</h3>
+<div id="scenarioCount" class="value">0</div>
+</div>
+
+<div class="metric">
+<h3>KCh do weryfikacji</h3>
+<div id="expiredCount" class="value">0</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- PRODUKTY -->
+
+<div id="products" class="page">
 
 <div class="card">
 
-<h2>1. Źródło danych</h2>
-
-<label>
-<input type="radio" name="source" checked onclick="toggleSource()">
- Wyszukaj KCh w internecie
-</label>
-
-<br><br>
-
-<label>
-<input type="radio" name="source" onclick="toggleSource()">
- Załącz KCh PDF
-</label>
-
-<div id="searchSection">
-
-<br>
+<h2>Dodaj produkt</h2>
 
 <label>Nazwa produktu</label>
+<input id="productName">
 
-<input
-type="text"
-id="productName"
-placeholder="np. Sika Cleaner-205">
+<label>Producent</label>
+<input id="manufacturer">
 
-<button onclick="searchDoc()">
-Wyszukaj KCh
+<label>Data aktualizacji KCh</label>
+<input type="date" id="kchDate">
+
+<button class="action" onclick="addProduct()">
+Dodaj produkt
 </button>
 
-<div id="searchResult"></div>
-
-</div>
-
-<div id="uploadSection" class="hidden">
-
-<br>
-
-<label>Załącz KCh PDF</label>
-
-<input
-type="file"
-id="pdfFile"
-accept=".pdf"
-onchange="showFileName()">
-
-<div id="fileInfo"></div>
-
-</div>
-
 </div>
 
 <div class="card">
 
-<h2>2. Stanowisko pracy</h2>
+<h2>Produkty chemiczne</h2>
 
-<label>Stanowisko</label>
-<input type="text" id="jobTitle">
+<table>
 
-<label>Wydział / Lokalizacja</label>
-<input type="text">
+<thead>
+<tr>
+<th>Produkt</th>
+<th>Producent</th>
+<th>Data KCh</th>
+<th>Status</th>
+<th>Usuń</th>
+</tr>
+</thead>
 
-<label>Opis wykonywanych czynności</label>
-<textarea id="activities" rows="4"></textarea>
+<tbody id="productTable"></tbody>
 
-<label>Ilość zużywanej substancji</label>
-<input
-type="text"
-placeholder="np. 5 litrów tygodniowo">
-
-<label>Częstotliwość stosowania</label>
-
-<select>
-<option>Sporadycznie</option>
-<option>Kilka razy w miesiącu</option>
-<option>Kilka razy w tygodniu</option>
-<option>Codziennie</option>
-</select>
+</table>
 
 </div>
 
-<div class="card">
-
-<h2>3. Ekspozycja</h2>
-
-<label><input type="checkbox"> Kontakt ze skórą</label><br>
-<label><input type="checkbox"> Kontakt z oczami</label><br>
-<label><input type="checkbox"> Narażenie inhalacyjne</label><br>
-<label><input type="checkbox"> Ryzyko połknięcia</label>
-
 </div>
 
+<!-- STANOWISKA -->
+
+<div id="jobs" class="page">
+
 <div class="card">
 
-<h2>4. Analiza AI (wersja demo)</h2>
+<h2>Dodaj stanowisko</h2>
 
-<button onclick="runAI()">
-Analizuj zagrożenia
+<label>Nazwa stanowiska</label>
+<input id="jobName">
+
+<label>Lokalizacja</label>
+<input id="jobLocation">
+
+<label>Liczba pracowników</label>
+<input type="number" id="jobWorkers">
+
+<label>Opis stanowiska</label>
+<textarea id="jobDescription"></textarea>
+
+<button class="action" onclick="addJob()">
+Dodaj stanowisko
 </button>
 
-<div id="aiResult"></div>
-
 </div>
 
 <div class="card">
 
-<h2>5. Ocena ryzyka</h2>
+<h2>Stanowiska</h2>
 
-<label>Ciężkość skutków</label>
+<table>
 
-<select id="s">
-<option>1</option>
-<option>2</option>
-<option>3</option>
-<option>4</option>
-<option>5</option>
+<thead>
+
+<tr>
+<th>Stanowisko</th>
+<th>Lokalizacja</th>
+<th>Pracownicy</th>
+<th>Usuń</th>
+</tr>
+
+</thead>
+
+<tbody id="jobTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- SCENARIUSZE -->
+
+<div id="scenarios" class="page">
+
+<div class="card">
+
+<h2>Dodaj scenariusz</h2>
+
+<label>Nazwa scenariusza</label>
+<input id="scenarioName">
+
+<label>Sposób użycia</label>
+
+<select id="scenarioMethod">
+<option>Natrysk</option>
+<option>Przelewanie</option>
+<option>Mycie</option>
+<option>Dozowanie</option>
+<option>Układ zamknięty</option>
 </select>
 
-<label>Prawdopodobieństwo</label>
+<label>Czas ekspozycji</label>
 
-<select id="p">
-<option>1</option>
-<option>2</option>
-<option>3</option>
-<option>4</option>
-<option>5</option>
+<select id="scenarioTime">
+<option>&lt;15 min</option>
+<option>15-60 min</option>
+<option>1-4 h</option>
+<option>&gt;4 h</option>
 </select>
 
-<label>Ekspozycja</label>
+<label>Wentylacja</label>
 
-<select id="e">
-<option>1</option>
-<option>2</option>
-<option>3</option>
-<option>4</option>
-<option>5</option>
+<select id="scenarioVent">
+<option>Naturalna</option>
+<option>Mechaniczna</option>
+<option>Miejscowa wyciągowa</option>
 </select>
 
-<button onclick="calculateRisk()">
-Oblicz ryzyko
+<button class="action" onclick="addScenario()">
+Dodaj scenariusz
 </button>
 
-<div id="riskResult"></div>
-
 </div>
 
 <div class="card">
 
-<h2>6. Raport końcowy</h2>
+<h2>Scenariusze</h2>
 
-<div class="result">
+<table>
 
-<p><strong>Produkt:</strong> -</p>
-<p><strong>Stanowisko:</strong> -</p>
-<p><strong>Zagrożenia:</strong> -</p>
-<p><strong>ŚOI:</strong> -</p>
-<p><strong>Poziom ryzyka:</strong> -</p>
+<thead>
 
-</div>
+<tr>
+<th>Nazwa</th>
+<th>Metoda</th>
+<th>Czas</th>
+<th>Wentylacja</th>
+<th>Usuń</th>
+</tr>
+
+</thead>
+
+<tbody id="scenarioTable"></tbody>
+
+</table>
 
 </div>
 
@@ -268,152 +349,290 @@ Oblicz ryzyko
 
 <script>
 
-function toggleSource(){
+let products =
+JSON.parse(localStorage.getItem("products")) || [];
 
-    const radios =
-    document.getElementsByName("source");
+let jobs =
+JSON.parse(localStorage.getItem("jobs")) || [];
 
-    if(radios[0].checked){
+let scenarios =
+JSON.parse(localStorage.getItem("scenarios")) || [];
 
-        document.getElementById("searchSection")
-        .classList.remove("hidden");
+function showPage(page){
 
-        document.getElementById("uploadSection")
-        .classList.add("hidden");
-    }
-    else{
+document
+.querySelectorAll(".page")
+.forEach(p=>p.classList.remove("active"));
 
-        document.getElementById("searchSection")
-        .classList.add("hidden");
+document
+.getElementById(page)
+.classList.add("active");
 
-        document.getElementById("uploadSection")
-        .classList.remove("hidden");
-    }
+updateDashboard();
 }
 
-function searchDoc(){
+function getStatus(dateString){
 
-    const product =
-    document.getElementById("productName")
-    .value.trim();
+if(!dateString) return "brak";
 
-    if(product === ""){
+const today = new Date();
 
-        alert("Wpisz nazwę produktu.");
-        return;
-    }
+const kchDate = new Date(dateString);
 
-    const query =
-    `"${product}" "karta charakterystyki" filetype:pdf`;
+const years =
+(today - kchDate) /
+(1000*60*60*24*365);
 
-    const url =
-    "https://www.google.com/search?q=" +
-    encodeURIComponent(query);
+if(years < 3)
+return '<span class="status-green">🟢 Aktualna</span>';
 
-    window.open(url, "_blank");
+if(years < 5)
+return '<span class="status-yellow">🟡 Przegląd</span>';
 
-    document.getElementById("searchResult")
-    .innerHTML = `
-        <div class="result">
-            <b>Uruchomiono wyszukiwanie Google</b><br><br>
-            Produkt: ${product}<br>
-            Szukanie: karta charakterystyki PDF
-        </div>
-    `;
+return '<span class="status-red">🔴 Weryfikacja</span>';
 }
 
-function showFileName(){
+function addProduct(){
 
-    const fileInput =
-    document.getElementById("pdfFile");
+const product = {
+name:document.getElementById("productName").value,
+manufacturer:document.getElementById("manufacturer").value,
+date:document.getElementById("kchDate").value
+};
 
-    if(fileInput.files.length > 0){
+if(product.name==="") return;
 
-        document.getElementById("fileInfo")
-        .innerHTML = `
-        <div class="result">
-            Wybrano plik:<br>
-            <b>${fileInput.files[0].name}</b>
-        </div>
-        `;
-    }
+products.push(product);
+
+localStorage.setItem(
+"products",
+JSON.stringify(products)
+);
+
+renderProducts();
+updateDashboard();
 }
 
-function runAI(){
+function renderProducts(){
 
-    document.getElementById("aiResult")
-    .innerHTML = `
-    <div class="result">
+let html="";
 
-    <b>Proponowane zagrożenia</b>
+products.forEach((p,index)=>{
 
-    <ul>
-        <li>Kontakt chemiczny ze skórą</li>
-        <li>Kontakt z oczami</li>
-        <li>Narażenie inhalacyjne</li>
-        <li>Rozlanie substancji</li>
-    </ul>
+html+=`
+<tr>
+<td>${p.name}</td>
+<td>${p.manufacturer}</td>
+<td>${p.date}</td>
+<td>${getStatus(p.date)}</td>
+<td>
+<button onclick="deleteProduct(${index})">
+Usuń
+</button>
+</td>
+</tr>
+`;
 
-    <b>Proponowane środki ochronne</b>
+});
 
-    <ul>
-        <li>Rękawice nitrylowe</li>
-        <li>Okulary ochronne</li>
-        <li>Wentylacja miejscowa</li>
-        <li>Szkolenie pracowników</li>
-    </ul>
-
-    </div>
-    `;
+document
+.getElementById("productTable")
+.innerHTML = html;
 }
 
-function calculateRisk(){
+function deleteProduct(index){
 
-    const s =
-    parseInt(document.getElementById("s").value);
+products.splice(index,1);
 
-    const p =
-    parseInt(document.getElementById("p").value);
+localStorage.setItem(
+"products",
+JSON.stringify(products)
+);
 
-    const e =
-    parseInt(document.getElementById("e").value);
-
-    const score = s * p * e;
-
-    let level = "";
-    let cls = "";
-
-    if(score <= 20){
-
-        level = "Niskie";
-        cls = "low";
-    }
-    else if(score <= 50){
-
-        level = "Średnie";
-        cls = "medium";
-    }
-    else{
-
-        level = "Wysokie";
-        cls = "high";
-    }
-
-    document.getElementById("riskResult")
-    .innerHTML = `
-    <div class="result">
-
-        Wynik: <b>${score}</b>
-
-        <br><br>
-
-        <span class="badge ${cls}">
-            ${level}
-        </span>
-
-    </div>
-    `;
+renderProducts();
+updateDashboard();
 }
+
+function addJob(){
+
+const job = {
+
+name:
+document.getElementById("jobName").value,
+
+location:
+document.getElementById("jobLocation").value,
+
+workers:
+document.getElementById("jobWorkers").value,
+
+description:
+document.getElementById("jobDescription").value
+
+};
+
+if(job.name==="") return;
+
+jobs.push(job);
+
+localStorage.setItem(
+"jobs",
+JSON.stringify(jobs)
+);
+
+renderJobs();
+updateDashboard();
+}
+
+function renderJobs(){
+
+let html="";
+
+jobs.forEach((j,index)=>{
+
+html+=`
+<tr>
+<td>${j.name}</td>
+<td>${j.location}</td>
+<td>${j.workers}</td>
+<td>
+<button onclick="deleteJob(${index})">
+Usuń
+</button>
+</td>
+</tr>
+`;
+
+});
+
+document
+.getElementById("jobTable")
+.innerHTML=html;
+}
+
+function deleteJob(index){
+
+jobs.splice(index,1);
+
+localStorage.setItem(
+"jobs",
+JSON.stringify(jobs)
+);
+
+renderJobs();
+updateDashboard();
+}
+
+function addScenario(){
+
+const scenario={
+
+name:
+document.getElementById("scenarioName").value,
+
+method:
+document.getElementById("scenarioMethod").value,
+
+time:
+document.getElementById("scenarioTime").value,
+
+vent:
+document.getElementById("scenarioVent").value
+
+};
+
+if(scenario.name==="") return;
+
+scenarios.push(scenario);
+
+localStorage.setItem(
+"scenarios",
+JSON.stringify(scenarios)
+);
+
+renderScenarios();
+updateDashboard();
+}
+
+function renderScenarios(){
+
+let html="";
+
+scenarios.forEach((s,index)=>{
+
+html+=`
+<tr>
+<td>${s.name}</td>
+<td>${s.method}</td>
+<td>${s.time}</td>
+<td>${s.vent}</td>
+<td>
+<button onclick="deleteScenario(${index})">
+Usuń
+</button>
+</td>
+</tr>
+`;
+
+});
+
+document
+.getElementById("scenarioTable")
+.innerHTML=html;
+}
+
+function deleteScenario(index){
+
+scenarios.splice(index,1);
+
+localStorage.setItem(
+"scenarios",
+JSON.stringify(scenarios)
+);
+
+renderScenarios();
+updateDashboard();
+}
+
+function updateDashboard(){
+
+document
+.getElementById("productCount")
+.innerText=products.length;
+
+document
+.getElementById("jobCount")
+.innerText=jobs.length;
+
+document
+.getElementById("scenarioCount")
+.innerText=scenarios.length;
+
+let expired=0;
+
+products.forEach(p=>{
+
+if(!p.date) return;
+
+const years =
+(new Date()-new Date(p.date))
+/
+(1000*60*60*24*365);
+
+if(years>=5)
+expired++;
+
+});
+
+document
+.getElementById("expiredCount")
+.innerText=expired;
+}
+
+renderProducts();
+renderJobs();
+renderScenarios();
+updateDashboard();
 
 </script>
 
