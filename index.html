@@ -230,10 +230,6 @@ placeholder="np. EUH066"></textarea>
 Dodaj produkt
 </button>
 
-<button class="action" onclick="addProduct()">
-Dodaj produkt
-</button>
-
 </div>
 
 <div class="card">
@@ -357,40 +353,6 @@ Dodaj scenariusz
 
 </div>
 
-<div id="assessments" class="page">
-
-<div class="card">
-
-<h2>Nowa ocena ryzyka</h2>
-
-<label>Stanowisko</label>
-<select id="assessmentJob"></select>
-
-<label>Scenariusz użycia</label>
-<select id="assessmentScenario"></select>
-
-<label>Produkty stosowane na stanowisku</label>
-
-<div id="productSelection"></div>
-
-<label>Drogi narażenia</label>
-
-<label><input type="checkbox" id="expSkin"> Skóra</label><br>
-
-<label><input type="checkbox" id="expEyes"> Oczy</label><br>
-
-<label><input type="checkbox" id="expInhalation"> Inhalacja</label><br>
-
-<label><input type="checkbox" id="expIngestion"> Połknięcie</label>
-
-<br><br>
-
-<button class="action" onclick="generateAssessment()">
-Generuj ocenę
-</button>
-
-</div>
-
 <div class="card">
 
 <h2>Wynik oceny</h2>
@@ -431,6 +393,39 @@ Brak wygenerowanej oceny.
 
 </div>
 
+<div id="assessments" class="page">
+
+<div class="card">
+
+<h2>Nowa ocena ryzyka</h2>
+
+<label>Stanowisko</label>
+<select id="assessmentJob"></select>
+
+<label>Scenariusz użycia</label>
+<select id="assessmentScenario"></select>
+
+<label>Produkty stosowane na stanowisku</label>
+
+<div id="productSelection"></div>
+
+<label>Drogi narażenia</label>
+
+<label><input type="checkbox" id="expSkin"> Skóra</label><br>
+
+<label><input type="checkbox" id="expEyes"> Oczy</label><br>
+
+<label><input type="checkbox" id="expInhalation"> Inhalacja</label><br>
+
+<label><input type="checkbox" id="expIngestion"> Połknięcie</label>
+
+<br><br>
+
+<button class="action" onclick="generateAssessment()">
+Generuj ocenę
+</button>
+
+</div>
 <script>
 
 let products =
@@ -538,7 +533,8 @@ JSON.stringify(products)
 
 renderProducts();
 updateDashboard();
-
+populateAssessmentData();
+    
 document.getElementById("productName").value="";
 document.getElementById("manufacturer").value="";
 document.getElementById("kchVersion").value="";
