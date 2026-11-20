@@ -347,6 +347,14 @@ Dodaj stanowisko
 <option>Miejscowa wyciągowa</option>
 </select>
 
+<label>Ilość preparatu</label>
+
+<select id="scenarioAmount">
+<option>Mała (&lt;1 l/kg)</option>
+<option>Średnia (1-10 l/kg)</option>
+<option>Duża (&gt;10 l/kg)</option>
+</select>
+    
 <button class="action" onclick="addScenario()">
 Dodaj scenariusz
 </button>
@@ -380,6 +388,7 @@ Brak wygenerowanej oceny.
 <th>Metoda</th>
 <th>Czas</th>
 <th>Wentylacja</th>
+<th>Ilość</th>
 <th>Usuń</th>
 </tr>
 
@@ -673,6 +682,9 @@ document.getElementById("scenarioTime").value,
 vent:
 document.getElementById("scenarioVent").value
 
+amount:
+document.getElementById("scenarioAmount").value,
+    
 };
 
 if(scenario.name==="") return;
@@ -701,6 +713,7 @@ html+=`
 <td>${s.method}</td>
 <td>${s.time}</td>
 <td>${s.vent}</td>
+<td>${s.amount}</td>
 <td>
 <button onclick="deleteScenario(${index})">
 Usuń
@@ -823,7 +836,80 @@ document.getElementById(
 ).innerHTML=productHtml;
 
 }
+const hazardDictionary = {
 
+"H225":{
+score:3,
+risk:"Pożar i wybuch"
+},
+
+"H226":{
+score:2,
+risk:"Substancja łatwopalna"
+},
+
+"H304":{
+score:4,
+risk:"Połknięcie i aspiracja"
+},
+
+"H314":{
+score:5,
+risk:"Poważne oparzenia skóry i uszkodzenie oczu"
+},
+
+"H315":{
+score:2,
+risk:"Podrażnienie skóry"
+},
+
+"H317":{
+score:3,
+risk:"Reakcja alergiczna skóry"
+},
+
+"H318":{
+score:4,
+risk:"Poważne uszkodzenie oczu"
+},
+
+"H319":{
+score:2,
+risk:"Podrażnienie oczu"
+},
+
+"H331":{
+score:5,
+risk:"Toksyczne przy wdychaniu"
+},
+
+"H332":{
+score:3,
+risk:"Szkodliwe przy wdychaniu"
+},
+
+"H335":{
+score:3,
+risk:"Podrażnienie dróg oddechowych"
+},
+
+"H336":{
+score:2,
+risk:"Zawroty głowy i senność"
+},
+
+"H350":{
+score:5,
+risk:"Rakotwórczość"
+},
+
+"H360":{
+score:5,
+risk:"Szkodliwy wpływ na rozrodczość"
+}
+
+};
+    
 function generateAssessment(){
 
 const selectedProducts=[];
