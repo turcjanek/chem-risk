@@ -143,6 +143,7 @@ table th{
 
 <button onclick="showPage('scenarios')">⚙️ Scenariusze</button>
 
+<button onclick="showPage('assessments')">📋 Oceny</button>    
 </nav>
 
 </header>
@@ -321,6 +322,54 @@ Dodaj scenariusz
 
 </div>
 
+<div id="assessments" class="page">
+
+<div class="card">
+
+<h2>Nowa ocena ryzyka</h2>
+
+<label>Stanowisko</label>
+<select id="assessmentJob"></select>
+
+<label>Scenariusz użycia</label>
+<select id="assessmentScenario"></select>
+
+<label>Produkty stosowane na stanowisku</label>
+
+<div id="productSelection"></div>
+
+<label>Drogi narażenia</label>
+
+<label><input type="checkbox" id="expSkin"> Skóra</label><br>
+
+<label><input type="checkbox" id="expEyes"> Oczy</label><br>
+
+<label><input type="checkbox" id="expInhalation"> Inhalacja</label><br>
+
+<label><input type="checkbox" id="expIngestion"> Połknięcie</label>
+
+<br><br>
+
+<button class="action" onclick="generateAssessment()">
+Generuj ocenę
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Wynik oceny</h2>
+
+<div id="assessmentResult">
+
+Brak wygenerowanej oceny.
+
+</div>
+
+</div>
+
+</div>
+    
 <div class="card">
 
 <h2>Scenariusze</h2>
@@ -411,6 +460,7 @@ JSON.stringify(products)
 
 renderProducts();
 updateDashboard();
+populateAssessmentData();
 }
 
 function renderProducts(){
@@ -482,6 +532,7 @@ JSON.stringify(jobs)
 
 renderJobs();
 updateDashboard();
+populateAssessmentData();
 }
 
 function renderJobs(){
@@ -552,6 +603,7 @@ JSON.stringify(scenarios)
 
 renderScenarios();
 updateDashboard();
+populateAssessmentData();
 }
 
 function renderScenarios(){
@@ -633,7 +685,144 @@ renderProducts();
 renderJobs();
 renderScenarios();
 updateDashboard();
+populateAssessmentData();
 
+function populateAssessmentData(){
+
+let jobsHtml="";
+
+jobs.forEach(j=>{
+
+jobsHtml+=`
+<option>${j.name}</option>
+`;
+
+});
+
+document.getElementById(
+"assessmentJob"
+).innerHTML=jobsHtml;
+
+
+let scenarioHtml="";
+
+scenarios.forEach(s=>{
+
+scenarioHtml+=`
+<option>${s.name}</option>
+`;
+
+});
+
+document.getElementById(
+"assessmentScenario"
+).innerHTML=scenarioHtml;
+
+
+let productHtml="";
+
+products.forEach((p,index)=>{
+
+productHtml+=`
+<label>
+<input
+type="checkbox"
+class="assessmentProduct"
+value="${p.name}">
+${p.name}
+</label><br>
+`;
+
+});
+
+document.getElementById(
+"productSelection"
+).innerHTML=productHtml;
+
+}
+
+function generateAssessment(){
+
+const selectedProducts=[];
+
+document
+.querySelectorAll(".assessmentProduct")
+.forEach(item=>{
+
+if(item.checked){
+
+selectedProducts.push(
+item.value
+);
+
+}
+
+});
+
+const exposures=[];
+
+if(document.getElementById("expSkin").checked)
+exposures.push("Skóra");
+
+if(document.getElementById("expEyes").checked)
+exposures.push("Oczy");
+
+if(document.getElementById("expInhalation").checked)
+exposures.push("Inhalacja");
+
+if(document.getElementById("expIngestion").checked)
+exposures.push("Połknięcie");
+
+let risk="Niskie";
+
+if(
+selectedProducts.length>=2
+&&
+document.getElementById("expInhalation").checked
+){
+risk="Średnie";
+}
+
+if(selectedProducts.length>=3){
+risk="Wysokie";
+}
+
+document.getElementById(
+"assessmentResult"
+).innerHTML=
+
+`
+<div class="result">
+
+<b>Stanowisko:</b>
+${document.getElementById("assessmentJob").value}
+
+<br><br>
+
+<b>Scenariusz:</b>
+${document.getElementById("assessmentScenario").value}
+
+<br><br>
+
+<b>Produkty:</b>
+${selectedProducts.join(", ")}
+
+<br><br>
+
+<b>Drogi narażenia:</b>
+${exposures.join(", ")}
+
+<br><br>
+
+<b>Poziom ryzyka:</b>
+
+<h3>${risk}</h3>
+
+</div>
+`;
+
+}
+    
 </script>
 
 </body>
