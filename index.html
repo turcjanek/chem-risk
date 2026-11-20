@@ -227,13 +227,28 @@ rows="2"
 placeholder="np. EUH066"></textarea>
 
 <label>ŚOI wg KCh</label>
-<textarea id="ppeData" rows="4"></textarea>
+
+<textarea
+id="ppeData"
+rows="4"
+placeholder="np. Rękawice butylowe, okulary szczelne">
+</textarea>
 
 <label>Środki techniczne wg KCh</label>
-<textarea id="technicalData" rows="3"></textarea>
+
+<textarea
+id="technicalData"
+rows="3"
+placeholder="np. Wentylacja miejscowa wyciągowa">
+</textarea>
 
 <label>Środki organizacyjne wg KCh</label>
-<textarea id="organisationData" rows="3"></textarea>
+
+<textarea
+id="organisationData"
+rows="3"
+placeholder="np. Szkolenie stanowiskowe, instrukcja użytkowania">
+</textarea>
     
 <button class="action" onclick="addProduct()">
 Dodaj produkt
@@ -533,8 +548,17 @@ hCodes:
 document.getElementById("hCodes").value,
 
 euhCodes:
-document.getElementById("euhCodes").value
+document.getElementById("euhCodes").value,
 
+ppe:
+document.getElementById("ppeData").value,
+
+technical:
+document.getElementById("technicalData").value,
+
+organisation:
+document.getElementById("organisationData").value
+    
 };
 
 if(product.name===""){
@@ -1161,7 +1185,32 @@ function generateAssessment(){
     let identifiedRisks = [];
 
     selectedProducts.forEach(product => {
+if(product.ppe){
 
+    product.ppe
+    .split(",")
+    .forEach(item =>
+        manufacturerPPE.add(item.trim())
+    );
+}
+
+if(product.technical){
+
+    product.technical
+    .split(",")
+    .forEach(item =>
+        manufacturerTechnical.add(item.trim())
+    );
+}
+
+if(product.organisation){
+
+    product.organisation
+    .split(",")
+    .forEach(item =>
+        manufacturerOrganisation.add(item.trim())
+    );
+}
         const matches =
         product.hCodes.match(/H\d{3}/g) || [];
 
@@ -1283,6 +1332,9 @@ recommendations.add(p)
     [...new Set(identifiedRisks)];
 
     let recommendations = new Set();
+    let manufacturerPPE = new Set();
+let manufacturerTechnical = new Set();
+let manufacturerOrganisation = new Set();
 
     if(exposures.includes("Skóra")){
 
@@ -1380,16 +1432,35 @@ recommendations.add(p)
 
     <h2>${riskLevel}</h2>
 
-    <b>Zalecane środki ochronne:</b>
+ <b>ŚOI wg KCh:</b>
 
-    <ul>
-    ${Array.from(recommendations)
-.map(
-    r => `<li>${r}</li>`
-)
+<ul>
+${
+Array.from(manufacturerPPE)
+.map(r => `<li>${r}</li>`)
 .join("")
-    }
-    </ul>
+}
+</ul>
+
+<b>Środki techniczne wg KCh:</b>
+
+<ul>
+${
+Array.from(manufacturerTechnical)
+.map(r => `<li>${r}</li>`)
+.join("")
+}
+</ul>
+
+<b>Środki organizacyjne wg KCh:</b>
+
+<ul>
+${
+Array.from(manufacturerOrganisation)
+.map(r => `<li>${r}</li>`)
+.join("")
+}
+</ul>
 
     </div>
 
