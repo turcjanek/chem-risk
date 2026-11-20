@@ -186,16 +186,49 @@ table th{
 
 <div class="card">
 
-<h2>Dodaj produkt</h2>
+<h2>Dodaj produkt chemiczny</h2>
 
 <label>Nazwa produktu</label>
-<input id="productName">
+<input id="productName"
+placeholder="np. WD‑40 Specialist Degreaser">
 
 <label>Producent</label>
-<input id="manufacturer">
+<input id="manufacturer"
+placeholder="np. WD‑40 Company">
+
+<label>Numer wersji KCh</label>
+<input id="kchVersion"
+placeholder="np. 3.0">
 
 <label>Data aktualizacji KCh</label>
 <input type="date" id="kchDate">
+
+<label>Plik KCh (PDF)</label>
+<input
+type="file"
+id="productPdf"
+accept=".pdf"
+onchange="showProductPdf()">
+
+<div id="pdfInfo"></div>
+
+<label>Zwroty H</label>
+
+<textarea
+id="hCodes"
+rows="3"
+placeholder="np. H222, H229, H336"></textarea>
+
+<label>Zwroty EUH</label>
+
+<textarea
+id="euhCodes"
+rows="2"
+placeholder="np. EUH066"></textarea>
+
+<button class="action" onclick="addProduct()">
+Dodaj produkt
+</button>
 
 <button class="action" onclick="addProduct()">
 Dodaj produkt
@@ -213,7 +246,9 @@ Dodaj produkt
 <tr>
 <th>Produkt</th>
 <th>Producent</th>
+<th>Wersja</th>
 <th>Data KCh</th>
+<th>Zwroty H</th>
 <th>Status</th>
 <th>Usuń</th>
 </tr>
@@ -407,6 +442,22 @@ JSON.parse(localStorage.getItem("jobs")) || [];
 let scenarios =
 JSON.parse(localStorage.getItem("scenarios")) || [];
 
+function showProductPdf(){
+
+    const file =
+    document.getElementById("productPdf");
+
+    if(file.files.length > 0){
+
+        document.getElementById("pdfInfo")
+        .innerHTML = `
+        <div class="result">
+            Załączono:
+            <b>${file.files[0].name}</b>
+        </div>
+        `;
+    }
+}
 function showPage(page){
 
 document
@@ -443,13 +494,42 @@ return '<span class="status-red">🔴 Weryfikacja</span>';
 
 function addProduct(){
 
+function addProduct(){
+
+const file =
+document.getElementById("productPdf");
+
 const product = {
-name:document.getElementById("productName").value,
-manufacturer:document.getElementById("manufacturer").value,
-date:document.getElementById("kchDate").value
+
+name:
+document.getElementById("productName").value,
+
+manufacturer:
+document.getElementById("manufacturer").value,
+
+version:
+document.getElementById("kchVersion").value,
+
+date:
+document.getElementById("kchDate").value,
+
+pdf:
+file.files.length > 0
+? file.files[0].name
+: "",
+
+hCodes:
+document.getElementById("hCodes").value,
+
+euhCodes:
+document.getElementById("euhCodes").value
+
 };
 
-if(product.name==="") return;
+if(product.name===""){
+alert("Podaj nazwę produktu");
+return;
+}
 
 products.push(product);
 
@@ -460,7 +540,14 @@ JSON.stringify(products)
 
 renderProducts();
 updateDashboard();
-populateAssessmentData();
+
+document.getElementById("productName").value="";
+document.getElementById("manufacturer").value="";
+document.getElementById("kchVersion").value="";
+document.getElementById("kchDate").value="";
+document.getElementById("hCodes").value="";
+document.getElementById("euhCodes").value="";
+document.getElementById("pdfInfo").innerHTML="";
 }
 
 function renderProducts(){
@@ -473,7 +560,9 @@ html+=`
 <tr>
 <td>${p.name}</td>
 <td>${p.manufacturer}</td>
+<td>${p.version || ""}</td>
 <td>${p.date}</td>
+<td>${p.hCodes || ""}</td>
 <td>${getStatus(p.date)}</td>
 <td>
 <button onclick="deleteProduct(${index})">
