@@ -912,9 +912,12 @@ risk:"Szkodliwy wpływ na rozrodczość"
     
 function generateAssessment(){
 
-alert("generateAssessment działa");
+    alert("generateAssessment działa");
 
-const selectedProducts = [];
+    console.log(products);
+    console.log(scenarios);
+
+    const selectedProducts = [];
 
     document
     .querySelectorAll(".assessmentProduct")
