@@ -350,11 +350,11 @@ Dodaj stanowisko
 <label>Ilość preparatu</label>
 
 <select id="scenarioAmount">
-<option>Mała (&lt;1 l/kg)</option>
+<option>Mała (<1 l/kg)</option>
 <option>Średnia (1-10 l/kg)</option>
-<option>Duża (&gt;10 l/kg)</option>
+<option>Duża (>10 l/kg)</option>
 </select>
-    
+
 <button class="action" onclick="addScenario()">
 Dodaj scenariusz
 </button>
@@ -680,10 +680,10 @@ time:
 document.getElementById("scenarioTime").value,
 
 vent:
-document.getElementById("scenarioVent").value
+document.getElementById("scenarioVent").value,
 
 amount:
-document.getElementById("scenarioAmount").value,
+document.getElementById("scenarioAmount").value
     
 };
 
@@ -912,86 +912,290 @@ risk:"Szkodliwy wpływ na rozrodczość"
     
 function generateAssessment(){
 
-const selectedProducts=[];
+    const selectedProducts = [];
 
-document
-.querySelectorAll(".assessmentProduct")
-.forEach(item=>{
+    document
+    .querySelectorAll(".assessmentProduct")
+    .forEach(item => {
 
-if(item.checked){
+        if(item.checked){
 
-selectedProducts.push(
-item.value
-);
+            const product =
+            products.find(
+                p => p.name === item.value
+            );
 
-}
+            if(product){
+                selectedProducts.push(product);
+            }
+        }
 
-});
+    });
 
-const exposures=[];
+    if(selectedProducts.length === 0){
 
-if(document.getElementById("expSkin").checked)
-exposures.push("Skóra");
+        alert("Wybierz przynajmniej jeden produkt.");
 
-if(document.getElementById("expEyes").checked)
-exposures.push("Oczy");
+        return;
+    }
 
-if(document.getElementById("expInhalation").checked)
-exposures.push("Inhalacja");
+    const exposures = [];
 
-if(document.getElementById("expIngestion").checked)
-exposures.push("Połknięcie");
+    if(document.getElementById("expSkin").checked)
+    exposures.push("Skóra");
 
-let risk="Niskie";
+    if(document.getElementById("expEyes").checked)
+    exposures.push("Oczy");
 
-if(
-selectedProducts.length>=2
-&&
-document.getElementById("expInhalation").checked
-){
-risk="Średnie";
-}
+    if(document.getElementById("expInhalation").checked)
+    exposures.push("Inhalacja");
 
-if(selectedProducts.length>=3){
-risk="Wysokie";
-}
+    if(document.getElementById("expIngestion").checked)
+    exposures.push("Połknięcie");
 
-document.getElementById(
-"assessmentResult"
-).innerHTML=
+    const scenarioName =
+    document.getElementById("assessmentScenario").value;
 
-`
-<div class="result">
+    const scenario =
+    scenarios.find(
+        s => s.name === scenarioName
+    );
 
-<b>Stanowisko:</b>
-${document.getElementById("assessmentJob").value}
+    let hazardScore = 0;
+    let identifiedRisks = [];
 
-<br><br>
+    selectedProducts.forEach(product => {
 
-<b>Scenariusz:</b>
-${document.getElementById("assessmentScenario").value}
+        const matches =
+        product.hCodes.match(/H\d{3}/g) || [];
 
-<br><br>
+        matches.forEach(code => {
 
-<b>Produkty:</b>
-${selectedProducts.join(", ")}
+            if(hazardDictionary[code]){
 
-<br><br>
+                hazardScore =
+                Math.max(
+                    hazardScore,
+                    hazardDictionary[code].score
+                );
 
-<b>Drogi narażenia:</b>
-${exposures.join(", ")}
+                identifiedRisks.push(
+                    hazardDictionary[code].risk
+                );
+            }
+        });
 
-<br><br>
+    });
 
-<b>Poziom ryzyka:</b>
+    let exposureScore = 0;
 
-<h3>${risk}</h3>
+    if(scenario){
 
-</div>
-`;
+        switch(scenario.method){
 
-}
-    
+            case "Natrysk":
+                exposureScore += 3;
+                break;
+
+            case "Mycie":
+                exposureScore += 2;
+                break;
+
+            case "Przelewanie":
+                exposureScore += 2;
+                break;
+
+            case "Dozowanie":
+                exposureScore += 1;
+                break;
+
+            case "Układ zamknięty":
+                exposureScore += 0;
+                break;
+        }
+
+        switch(scenario.time){
+
+            case "15-60 min":
+                exposureScore += 1;
+                break;
+
+            case "1-4 h":
+                exposureScore += 2;
+                break;
+
+            case ">4 h":
+                exposureScore += 3;
+                break;
+        }
+
+        switch(scenario.vent){
+
+            case "Mechaniczna":
+                exposureScore += 1;
+                break;
+
+            case "Naturalna":
+                exposureScore += 2;
+                break;
+
+            case "Miejscowa wyciągowa":
+                exposureScore += 0;
+                break;
+        }
+
+        if(scenario.amount){
+
+            if(
+                scenario.amount.includes("Średnia")
+            ){
+                exposureScore += 1;
+            }
+
+            if(
+                scenario.amount.includes("Duża")
+            ){
+                exposureScore += 2;
+            }
+
+        }
+
+    }
+
+    const totalScore =
+    hazardScore + exposureScore;
+
+    let riskLevel = "";
+
+    if(totalScore <= 4){
+
+        riskLevel = "🟢 Niskie";
+    }
+    else if(totalScore <= 8){
+
+        riskLevel = "🟡 Średnie";
+    }
+    else{
+
+        riskLevel = "🔴 Wysokie";
+    }
+
+    const uniqueRisks =
+    [...new Set(identifiedRisks)];
+
+    let recommendations = [];
+
+    if(exposures.includes("Skóra")){
+
+        recommendations.push(
+            "Rękawice ochronne"
+        );
+    }
+
+    if(exposures.includes("Oczy")){
+
+        recommendations.push(
+            "Okulary ochronne"
+        );
+    }
+
+    if(exposures.includes("Inhalacja")){
+
+        recommendations.push(
+            "Zapewnienie wentylacji"
+        );
+    }
+
+    if(totalScore >= 9){
+
+        recommendations.push(
+            "Rozważyć wentylację miejscową"
+        );
+
+        recommendations.push(
+            "Ograniczyć czas ekspozycji"
+        );
+    }
+
+    document
+    .getElementById("assessmentResult")
+    .innerHTML = `
+
+    <div class="result">
+
+    <h3>Ocena ryzyka chemicznego</h3>
+
+    <b>Stanowisko:</b><br>
+    ${
+        document.getElementById(
+            "assessmentJob"
+        ).value
+    }
+
+    <br><br>
+
+    <b>Scenariusz:</b><br>
+    ${scenarioName}
+
+    <br><br>
+
+    <b>Produkty:</b><br>
+    ${selectedProducts
+        .map(p => p.name)
+        .join(", ")}
+
+    <br><br>
+
+    <b>Zidentyfikowane zagrożenia:</b>
+
+    <ul>
+    ${uniqueRisks
+        .map(
+            r => `<li>${r}</li>`
+        )
+        .join("")
+    }
+    </ul>
+
+    <b>Drogi narażenia:</b><br>
+    ${exposures.join(", ")}
+
+    <br><br>
+
+    <b>Punkty zagrożenia:</b>
+    ${hazardScore}
+
+    <br>
+
+    <b>Punkty ekspozycji:</b>
+    ${exposureScore}
+
+    <br>
+
+    <b>Łączna punktacja:</b>
+    ${totalScore}
+
+    <br><br>
+
+    <b>Poziom ryzyka:</b>
+
+    <h2>${riskLevel}</h2>
+
+    <b>Zalecane środki ochronne:</b>
+
+    <ul>
+    ${recommendations
+        .map(
+            r => `<li>${r}</li>`
+        )
+        .join("")
+    }
+    </ul>
+
+    </div>
+
+    `;
+}    
 </script>
 
 </body>
