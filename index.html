@@ -1183,7 +1183,12 @@ function generateAssessment(){
 
     let hazardScore = 0;
     let identifiedRisks = [];
-
+    
+  let recommendations = new Set();
+    let manufacturerPPE = new Set();
+let manufacturerTechnical = new Set();
+let manufacturerOrganisation = new Set();
+    
     selectedProducts.forEach(product => {
 if(product.ppe){
 
@@ -1331,47 +1336,70 @@ recommendations.add(p)
     const uniqueRisks =
     [...new Set(identifiedRisks)];
 
-    let recommendations = new Set();
-    let manufacturerPPE = new Set();
-let manufacturerTechnical = new Set();
-let manufacturerOrganisation = new Set();
+      if(exposures.includes("Skóra")){
 
-    if(exposures.includes("Skóra")){
-
-        recommendations.push(
+        recommendations.add(
             "Rękawice ochronne"
         );
     }
 
     if(exposures.includes("Oczy")){
 
-        recommendations.push(
+        recommendations.add(
             "Okulary ochronne"
         );
     }
 
     if(exposures.includes("Inhalacja")){
 
-        recommendations.push(
+        recommendations.add(
             "Zapewnienie wentylacji"
         );
     }
 
     if(totalScore >= 9){
 
-        recommendations.push(
+        recommendations.add(
             "Rozważyć wentylację miejscową"
         );
 
-        recommendations.push(
+        recommendations.add(
             "Ograniczyć czas ekspozycji"
         );
     }
 
 document.getElementById("assessmentResult").innerHTML = `
 <div class="result">
-<h3>TEST</h3>
-<p>Funkcja działa poprawnie.</p>
+
+<h3>Ocena ryzyka chemicznego</h3>
+
+<b>Stanowisko:</b><br>
+${document.getElementById("assessmentJob").value}
+
+<br><br>
+
+<b>Scenariusz:</b><br>
+${scenarioName}
+
+<br><br>
+
+<b>Produkty:</b><br>
+${selectedProducts.map(p => p.name).join(", ")}
+
+<br><br>
+
+<b>Zidentyfikowane zagrożenia:</b>
+
+<ul>
+${uniqueRisks.map(r => `<li>${r}</li>`).join("")}
+</ul>
+
+<br>
+
+<b>Poziom ryzyka:</b>
+
+<h2>${riskLevel}</h2>
+
 </div>
 `;
     <h3>Ocena ryzyka chemicznego</h3>
