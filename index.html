@@ -1125,12 +1125,7 @@ category:"Toksyczność"
 
 };
     
-function generateAssessment(){
-
-    alert("generateAssessment działa");
-
-    console.log(products);
-    console.log(scenarios);
+ffunction generateAssessment(){
 
     const selectedProducts = [];
 
@@ -1148,6 +1143,7 @@ function generateAssessment(){
             if(product){
                 selectedProducts.push(product);
             }
+
         }
 
     });
@@ -1155,23 +1151,9 @@ function generateAssessment(){
     if(selectedProducts.length === 0){
 
         alert("Wybierz przynajmniej jeden produkt.");
-
         return;
+
     }
-
-    const exposures = [];
-
-    if(document.getElementById("expSkin").checked)
-    exposures.push("Skóra");
-
-    if(document.getElementById("expEyes").checked)
-    exposures.push("Oczy");
-
-    if(document.getElementById("expInhalation").checked)
-    exposures.push("Inhalacja");
-
-    if(document.getElementById("expIngestion").checked)
-    exposures.push("Połknięcie");
 
     const scenarioName =
     document.getElementById("assessmentScenario").value;
@@ -1182,42 +1164,48 @@ function generateAssessment(){
     );
 
     let hazardScore = 0;
+
     let identifiedRisks = [];
-    
-  let recommendations = new Set();
+
     let manufacturerPPE = new Set();
-let manufacturerTechnical = new Set();
-let manufacturerOrganisation = new Set();
-    
+    let manufacturerTechnical = new Set();
+    let manufacturerOrganisation = new Set();
+
     selectedProducts.forEach(product => {
-if(product.ppe){
 
-    product.ppe
-    .split(",")
-    .forEach(item =>
-        manufacturerPPE.add(item.trim())
-    );
-}
+        if(product.ppe){
 
-if(product.technical){
+            product.ppe
+            .split(",")
+            .forEach(item =>
+                manufacturerPPE.add(item.trim())
+            );
 
-    product.technical
-    .split(",")
-    .forEach(item =>
-        manufacturerTechnical.add(item.trim())
-    );
-}
+        }
 
-if(product.organisation){
+        if(product.technical){
 
-    product.organisation
-    .split(",")
-    .forEach(item =>
-        manufacturerOrganisation.add(item.trim())
-    );
-}
+            product.technical
+            .split(",")
+            .forEach(item =>
+                manufacturerTechnical.add(item.trim())
+            );
+
+        }
+
+        if(product.organisation){
+
+            product.organisation
+            .split(",")
+            .forEach(item =>
+                manufacturerOrganisation.add(item.trim())
+            );
+
+        }
+
         const matches =
-        product.hCodes.match(/H\d{3}/g) || [];
+        (product.hCodes || "")
+        .match(/H\d{3}/g) || [];
 
         matches.forEach(code => {
 
@@ -1232,10 +1220,9 @@ if(product.organisation){
                 identifiedRisks.push(
                     hazardDictionary[code].risk
                 );
-                hazardDictionary[code].ppe.forEach(p =>
-recommendations.add(p)
-);
+
             }
+
         });
 
     });
@@ -1244,172 +1231,66 @@ recommendations.add(p)
 
     if(scenario){
 
-        switch(scenario.method){
+        if(scenario.method === "Natrysk")
+            exposureScore += 3;
 
-            case "Natrysk":
-                exposureScore += 3;
-                break;
+        if(scenario.method === "Mycie")
+            exposureScore += 2;
 
-            case "Mycie":
-                exposureScore += 2;
-                break;
+        if(scenario.method === "Przelewanie")
+            exposureScore += 2;
 
-            case "Przelewanie":
-                exposureScore += 2;
-                break;
+        if(scenario.method === "Dozowanie")
+            exposureScore += 1;
 
-            case "Dozowanie":
-                exposureScore += 1;
-                break;
+        if(scenario.time === "15-60 min")
+            exposureScore += 1;
 
-            case "Układ zamknięty":
-                exposureScore += 0;
-                break;
-        }
+        if(scenario.time === "1-4 h")
+            exposureScore += 2;
 
-        switch(scenario.time){
+        if(scenario.time === ">4 h")
+            exposureScore += 3;
 
-            case "15-60 min":
-                exposureScore += 1;
-                break;
+        if(scenario.vent === "Mechaniczna")
+            exposureScore += 1;
 
-            case "1-4 h":
-                exposureScore += 2;
-                break;
+        if(scenario.vent === "Naturalna")
+            exposureScore += 2;
 
-            case ">4 h":
-                exposureScore += 3;
-                break;
-        }
+        if(scenario.amount &&
+           scenario.amount.includes("Średnia"))
+            exposureScore += 1;
 
-        switch(scenario.vent){
-
-            case "Mechaniczna":
-                exposureScore += 1;
-                break;
-
-            case "Naturalna":
-                exposureScore += 2;
-                break;
-
-            case "Miejscowa wyciągowa":
-                exposureScore += 0;
-                break;
-        }
-
-        if(scenario.amount){
-
-            if(
-                scenario.amount.includes("Średnia")
-            ){
-                exposureScore += 1;
-            }
-
-            if(
-                scenario.amount.includes("Duża")
-            ){
-                exposureScore += 2;
-            }
-
-        }
-
+        if(scenario.amount &&
+           scenario.amount.includes("Duża"))
+            exposureScore += 2;
     }
 
     const totalScore =
     hazardScore + exposureScore;
 
-    let riskLevel = "";
+    let riskLevel = "🟢 Niskie";
 
-    if(totalScore <= 4){
-
-        riskLevel = "🟢 Niskie";
-    }
-    else if(totalScore <= 8){
-
+    if(totalScore > 4)
         riskLevel = "🟡 Średnie";
-    }
-    else{
 
+    if(totalScore > 8)
         riskLevel = "🔴 Wysokie";
-    }
 
     const uniqueRisks =
     [...new Set(identifiedRisks)];
 
-      if(exposures.includes("Skóra")){
+    document.getElementById(
+    "assessmentResult"
+).innerHTML = `
 
-        recommendations.add(
-            "Rękawice ochronne"
-        );
-    }
-
-    if(exposures.includes("Oczy")){
-
-        recommendations.add(
-            "Okulary ochronne"
-        );
-    }
-
-    if(exposures.includes("Inhalacja")){
-
-        recommendations.add(
-            "Zapewnienie wentylacji"
-        );
-    }
-
-    if(totalScore >= 9){
-
-        recommendations.add(
-            "Rozważyć wentylację miejscową"
-        );
-
-        recommendations.add(
-            "Ograniczyć czas ekspozycji"
-        );
-    }
-
-document.getElementById("assessmentResult").innerHTML = `
 <div class="result">
 
-<h3>Ocena ryzyka chemicznego</h3>
-
-<b>Stanowisko:</b><br>
-${document.getElementById("assessmentJob").value}
-
-<br><br>
-
-<b>Scenariusz:</b><br>
-${scenarioName}
-
-<br><br>
-
-<b>Produkty:</b><br>
-${selectedProducts.map(p => p.name).join(", ")}
-
-<br><br>
-
-<b>Zidentyfikowane zagrożenia:</b>
-
-<ul>
-${uniqueRisks.map(r => `<li>${r}</li>`).join("")}
-</ul>
-
-<br>
-
-<b>Poziom ryzyka:</b>
-
-<h2>${riskLevel}</h2>
-
-</div>
-`;
     <h3>Ocena ryzyka chemicznego</h3>
 
     <b>Stanowisko:</b><br>
-    ${
-        document.getElementById(
-            "assessmentJob"
-        ).value
-    }
+    ${document.getElementById("assessmentJob").value}
 
     <br><br>
 
@@ -1419,27 +1300,19 @@ ${uniqueRisks.map(r => `<li>${r}</li>`).join("")}
     <br><br>
 
     <b>Produkty:</b><br>
-    ${selectedProducts
-        .map(p => p.name)
-        .join(", ")}
+    ${selectedProducts.map(
+        p => p.name
+    ).join(", ")}
 
     <br><br>
 
-    <b>Zidentyfikowane zagrożenia:</b>
+    <b>Zagrożenia:</b>
 
     <ul>
-    ${uniqueRisks
-        .map(
-            r => `<li>${r}</li>`
-        )
-        .join("")
-    }
+    ${uniqueRisks.map(
+        r => `<li>${r}</li>`
+    ).join("")}
     </ul>
-
-    <b>Drogi narażenia:</b><br>
-    ${exposures.join(", ")}
-
-    <br><br>
 
     <b>Punkty zagrożenia:</b>
     ${hazardScore}
@@ -1460,41 +1333,30 @@ ${uniqueRisks.map(r => `<li>${r}</li>`).join("")}
 
     <h2>${riskLevel}</h2>
 
- <b>ŚOI wg KCh:</b>
+    <b>ŚOI wg KCh:</b>
 
-<ul>
-${
-Array.from(manufacturerPPE)
-.map(r => `<li>${r}</li>`)
-.join("")
-}
-</ul>
+    <ul>
+    ${Array.from(manufacturerPPE)
+        .map(r => `<li>${r}</li>`)
+        .join("")}
+    </ul>
 
-<b>Środki techniczne wg KCh:</b>
+    <b>Środki techniczne wg KCh:</b>
 
-<ul>
-${
-Array.from(manufacturerTechnical)
-.map(r => `<li>${r}</li>`)
-.join("")
-}
-</ul>
+    <ul>
+    ${Array.from(manufacturerTechnical)
+        .map(r => `<li>${r}</li>`)
+        .join("")}
+    </ul>
 
-<b>Środki organizacyjne wg KCh:</b>
+    <b>Środki organizacyjne wg KCh:</b>
 
-<ul>
-${
-Array.from(manufacturerOrganisation)
-.map(r => `<li>${r}</li>`)
-.join("")
-}
-</ul>
+    <ul>
+    ${Array.from(manufacturerOrganisation)
+        .map(r => `<li>${r}</li>`)
+        .join("")}
+    </ul>
 
-    </div>
+</div>
 
-    `;
-}    
-</script>
-
-</body>
-</html>
+`;
