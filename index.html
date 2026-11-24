@@ -501,6 +501,35 @@ function showProductPdf(){
         `;
     }
 }
+
+function getHazardBand(code){
+
+    for(const band in hazardBands){
+
+        if(hazardBands[band].includes(code)){
+            return band;
+        }
+
+    }
+
+    return "A";
+}
+
+function getBandScore(band){
+
+    switch(band){
+
+        case "A": return 1;
+        case "B": return 2;
+        case "C": return 3;
+        case "D": return 4;
+        case "E": return 5;
+
+        default: return 1;
+    }
+
+}
+    
 function showPage(page){
 
 document
@@ -887,259 +916,13 @@ function populateAssessmentData(){
     productDiv.innerHTML = productHtml;
 }
 
-const hazardDictionary = {
+const hazardBands = {
 
-"H220":{
-score:5,
-risk:"Skrajnie łatwopalny gaz",
-ppe:["Eliminacja źródeł zapłonu"],
-category:"Pożar"
-},
-
-"H221":{
-score:4,
-risk:"Gaz łatwopalny",
-ppe:["Eliminacja źródeł zapłonu"],
-category:"Pożar"
-},
-
-"H222":{
-score:4,
-risk:"Skrajnie łatwopalny aerozol",
-ppe:["Eliminacja źródeł zapłonu"],
-category:"Pożar"
-},
-
-"H223":{
-score:3,
-risk:"Łatwopalny aerozol",
-ppe:["Eliminacja źródeł zapłonu"],
-category:"Pożar"
-},
-
-"H225":{
-score:4,
-risk:"Wysoce łatwopalna ciecz i pary",
-ppe:["Okulary","Rękawice","Wentylacja"],
-category:"Pożar"
-},
-
-"H226":{
-score:3,
-risk:"Łatwopalna ciecz i pary",
-ppe:["Okulary","Rękawice"],
-category:"Pożar"
-},
-
-"H228":{
-score:4,
-risk:"Substancja stała łatwopalna",
-ppe:["Ograniczenie pylenia"],
-category:"Pożar"
-},
-
-"H290":{
-score:2,
-risk:"Może powodować korozję metali",
-ppe:["Rękawice"],
-category:"Chemiczne"
-},
-
-"H300":{
-score:5,
-risk:"Połknięcie grozi śmiercią",
-ppe:["Ścisłe procedury pracy"],
-category:"Toksyczność"
-},
-
-"H301":{
-score:4,
-risk:"Działa toksycznie po połknięciu",
-ppe:["Higiena pracy"],
-category:"Toksyczność"
-},
-
-"H302":{
-score:3,
-risk:"Działa szkodliwie po połknięciu",
-ppe:["Higiena pracy"],
-category:"Toksyczność"
-},
-
-"H304":{
-score:5,
-risk:"Może grozić śmiercią po połknięciu i dostaniu się przez drogi oddechowe",
-ppe:["Higiena pracy"],
-category:"Toksyczność"
-},
-
-"H310":{
-score:5,
-risk:"Grozi śmiercią w kontakcie ze skórą",
-ppe:["Rękawice chemoodporne","Odzież ochronna"],
-category:"Kontakt"
-},
-
-"H311":{
-score:4,
-risk:"Działa toksycznie w kontakcie ze skórą",
-ppe:["Rękawice chemoodporne"],
-category:"Kontakt"
-},
-
-"H312":{
-score:3,
-risk:"Działa szkodliwie w kontakcie ze skórą",
-ppe:["Rękawice ochronne"],
-category:"Kontakt"
-},
-
-"H314":{
-score:5,
-risk:"Powoduje poważne oparzenia skóry oraz uszkodzenia oczu",
-ppe:["Rękawice chemoodporne","Okulary szczelne","Przyłbica"],
-category:"Żrące"
-},
-
-"H315":{
-score:2,
-risk:"Działa drażniąco na skórę",
-ppe:["Rękawice ochronne"],
-category:"Drażniące"
-},
-
-"H317":{
-score:3,
-risk:"Może powodować reakcję alergiczną skóry",
-ppe:["Rękawice ochronne"],
-category:"Uczulające"
-},
-
-"H318":{
-score:4,
-risk:"Powoduje poważne uszkodzenie oczu",
-ppe:["Okulary szczelne","Przyłbica"],
-category:"Oczy"
-},
-
-"H319":{
-score:2,
-risk:"Działa drażniąco na oczy",
-ppe:["Okulary ochronne"],
-category:"Oczy"
-},
-
-"H330":{
-score:5,
-risk:"Wdychanie grozi śmiercią",
-ppe:["Ochrona dróg oddechowych"],
-category:"Inhalacja"
-},
-
-"H331":{
-score:4,
-risk:"Działa toksycznie w następstwie wdychania",
-ppe:["Ochrona dróg oddechowych"],
-category:"Inhalacja"
-},
-
-"H332":{
-score:3,
-risk:"Działa szkodliwie w następstwie wdychania",
-ppe:["Wentylacja","Ochrona dróg oddechowych"],
-category:"Inhalacja"
-},
-
-"H334":{
-score:5,
-risk:"Może powodować objawy alergii lub astmy",
-ppe:["Wentylacja","Ochrona dróg oddechowych"],
-category:"Układ oddechowy"
-},
-
-"H335":{
-score:3,
-risk:"Może powodować podrażnienie dróg oddechowych",
-ppe:["Wentylacja"],
-category:"Układ oddechowy"
-},
-
-"H336":{
-score:2,
-risk:"Może wywoływać uczucie senności lub zawroty głowy",
-ppe:["Wentylacja"],
-category:"Układ oddechowy"
-},
-
-"H340":{
-score:5,
-risk:"Może powodować wady genetyczne",
-ppe:["Minimalizacja narażenia"],
-category:"CMR"
-},
-
-"H341":{
-score:4,
-risk:"Podejrzewa się, że powoduje wady genetyczne",
-ppe:["Minimalizacja narażenia"],
-category:"CMR"
-},
-
-"H350":{
-score:5,
-risk:"Może powodować raka",
-ppe:["Minimalizacja narażenia"],
-category:"CMR"
-},
-
-"H351":{
-score:4,
-risk:"Podejrzewa się, że powoduje raka",
-ppe:["Minimalizacja narażenia"],
-category:"CMR"
-},
-
-"H360":{
-score:5,
-risk:"Może działać szkodliwie na płodność lub dziecko w łonie matki",
-ppe:["Minimalizacja narażenia"],
-category:"CMR"
-},
-
-"H361":{
-score:4,
-risk:"Podejrzewa się, że działa szkodliwie na płodność lub dziecko",
-ppe:["Minimalizacja narażenia"],
-category:"CMR"
-},
-
-"H370":{
-score:5,
-risk:"Powoduje uszkodzenie narządów",
-ppe:["Ochrona dróg oddechowych"],
-category:"Toksyczność"
-},
-
-"H371":{
-score:4,
-risk:"Może powodować uszkodzenie narządów",
-ppe:["Ochrona dróg oddechowych"],
-category:"Toksyczność"
-},
-
-"H372":{
-score:5,
-risk:"Powoduje uszkodzenie narządów przy długotrwałym narażeniu",
-ppe:["Ograniczenie ekspozycji"],
-category:"Toksyczność"
-},
-
-"H373":{
-score:4,
-risk:"Może powodować uszkodzenie narządów przy długotrwałym narażeniu",
-ppe:["Ograniczenie ekspozycji"],
-category:"Toksyczność"
-}
+A : ["H315","H319","H336"],
+B : ["H302","H312","H332","H371"],
+C : ["H301","H311","H314","H317","H331"],
+D : ["H300","H310","H330","H351","H360"],
+E : ["H334","H340","H350"]
 
 };
     
@@ -1232,15 +1015,14 @@ if(!scenario){
 
             if(hazardDictionary[code]){
 
-                hazardScore =
-                Math.max(
-                    hazardScore,
-                    hazardDictionary[code].score
-                );
+                const band =
+getHazardBand(code);
 
-                identifiedRisks.push(
-                    hazardDictionary[code].risk
-                );
+hazardScore =
+Math.max(
+    hazardScore,
+    getBandScore(band)
+);
 
             }
 
