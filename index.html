@@ -451,15 +451,27 @@ Generuj ocenę
 </div>
 <script>
 
-let products =
-JSON.parse(localStorage.getItem("products")) || [];
+let products = [];
+let jobs = [];
+let scenarios = [];
 
-let jobs =
-JSON.parse(localStorage.getItem("jobs")) || [];
+try{
+    products =
+        JSON.parse(localStorage.getItem("products")) || [];
 
-let scenarios =
-JSON.parse(localStorage.getItem("scenarios")) || [];
+    jobs =
+        JSON.parse(localStorage.getItem("jobs")) || [];
 
+    scenarios =
+        JSON.parse(localStorage.getItem("scenarios")) || [];
+}
+catch(err){
+    console.error(err);
+
+    localStorage.removeItem("products");
+    localStorage.removeItem("jobs");
+    localStorage.removeItem("scenarios");
+}
 function showProductPdf(){
 
     const file =
@@ -610,16 +622,16 @@ document
 }
 
 function deleteProduct(index){
+    products.splice(index,1);
 
-products.splice(index,1);
+    localStorage.setItem(
+        "products",
+        JSON.stringify(products)
+    );
 
-localStorage.setItem(
-"products",
-JSON.stringify(products)
-);
-
-renderProducts();
-updateDashboard();
+    renderProducts();
+    updateDashboard();
+    populateAssessmentData();
 }
 
 function addJob(){
