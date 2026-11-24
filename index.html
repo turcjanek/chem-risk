@@ -1035,6 +1035,114 @@ E : ["H334","H340","H350"]
             return 1;
     }
 }
+    function getStateScore(state){
+
+    switch(state){
+
+        case "Gaz":
+            return 5;
+
+        case "Aerozol":
+            return 4;
+
+        case "Pył":
+            return 4;
+
+        case "Ciecz":
+            return 2;
+
+        case "Ciało stałe":
+            return 1;
+
+        default:
+            return 1;
+    }
+
+}
+
+    function getMethodScore(method){
+
+    switch(method){
+
+        case "Natrysk":
+            return 4;
+
+        case "Przelewanie":
+            return 3;
+
+        case "Mycie":
+            return 2;
+
+        case "Dozowanie":
+            return 1;
+
+        case "Układ zamknięty":
+            return 0;
+
+        default:
+            return 1;
+    }
+
+}
+
+    function getTimeScore(time){
+
+    switch(time){
+
+        case "<15 min":
+            return 1;
+
+        case "15-60 min":
+            return 2;
+
+        case "1-4 h":
+            return 3;
+
+        case ">4 h":
+            return 4;
+
+        default:
+            return 1;
+    }
+
+}
+
+    function getAmountScore(amount){
+
+    if(!amount) return 1;
+
+    if(amount.includes("Mała"))
+        return 1;
+
+    if(amount.includes("Średnia"))
+        return 2;
+
+    if(amount.includes("Duża"))
+        return 3;
+
+    return 1;
+}
+
+    function getVentilationFactor(vent){
+
+    switch(vent){
+
+        case "Miejscowa wyciągowa":
+            return 0.5;
+
+        case "Mechaniczna":
+            return 0.7;
+
+        case "Naturalna":
+            return 0.9;
+
+        default:
+            return 1;
+    }
+
+}
+
+    
 function generateAssessment(){
 
     const selectedProducts = [];
@@ -1139,56 +1247,62 @@ Math.max(
 
     });
 
-    let exposureScore = 0;
+   const mainProduct =
+selectedProducts[0];
 
-    if(scenario){
+const stateScore =
+getStateScore(
+    mainProduct.physicalState
+);
 
-        if(scenario.method === "Natrysk")
-            exposureScore += 3;
+const methodScore =
+getMethodScore(
+    scenario.method
+);
 
-        if(scenario.method === "Mycie")
-            exposureScore += 2;
+const timeScore =
+getTimeScore(
+    scenario.time
+);
 
-        if(scenario.method === "Przelewanie")
-            exposureScore += 2;
+const amountScore =
+getAmountScore(
+    scenario.amount
+);
 
-        if(scenario.method === "Dozowanie")
-            exposureScore += 1;
+const exposureScore =
+(
+    stateScore +
+    methodScore +
+    timeScore +
+    amountScore
+) / 4;
+    const controlFactor =
+getVentilationFactor(
+    scenario.vent
+);
 
-        if(scenario.time === "15-60 min")
-            exposureScore += 1;
+const frequencyFactor =
+getFrequencyFactor(
+    scenario.frequency
+);
 
-        if(scenario.time === "1-4 h")
-            exposureScore += 2;
+const totalScore =
+hazardScore *
+exposureScore *
+controlFactor *
+frequencyFactor;
 
-        if(scenario.time === ">4 h")
-            exposureScore += 3;
+    llet riskLevel = "🟢 Niskie";
 
-        if(scenario.vent === "Mechaniczna")
-            exposureScore += 1;
+if(totalScore > 3)
+    riskLevel = "🟡 Średnie";
 
-        if(scenario.vent === "Naturalna")
-            exposureScore += 2;
+if(totalScore > 8)
+    riskLevel = "🟠 Istotne";
 
-        if(scenario.amount &&
-           scenario.amount.includes("Średnia"))
-            exposureScore += 1;
-
-        if(scenario.amount &&
-           scenario.amount.includes("Duża"))
-            exposureScore += 2;
-    }
-
-    const totalScore =
-    hazardScore + exposureScore;
-
-    let riskLevel = "🟢 Niskie";
-
-    if(totalScore > 4)
-        riskLevel = "🟡 Średnie";
-
-    if(totalScore > 8)
-        riskLevel = "🔴 Wysokie";
+if(totalScore > 15)
+    riskLevel = "🔴 Wysokie";
 
     const uniqueRisks =
     [...new Set(identifiedRisks)];
@@ -1311,6 +1425,20 @@ ${selectedProducts
 
     <b>Punkty ekspozycji:</b>
     ${exposureScore}
+<br>
+
+<b>Stan skupienia:</b>
+${mainProduct.physicalState}
+
+<br>
+
+<b>Współczynnik wentylacji:</b>
+${controlFactor}
+
+<br>
+
+<b>Współczynnik częstotliwości:</b>
+${frequencyFactor}
 
     <br>
 
