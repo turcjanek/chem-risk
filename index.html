@@ -584,6 +584,10 @@ document.getElementById("kchDate").value="";
 document.getElementById("hCodes").value="";
 document.getElementById("euhCodes").value="";
 document.getElementById("pdfInfo").innerHTML="";
+document.getElementById("ppeData").value = "";
+document.getElementById("technicalData").value = "";
+document.getElementById("organisationData").value = "";
+document.getElementById("productPdf").value = "";
 }
 
 function renderProducts(){
@@ -818,51 +822,51 @@ populateAssessmentData();
 
 function populateAssessmentData(){
 
-let jobsHtml="";
+    const jobSelect =
+        document.getElementById("assessmentJob");
 
-jobs.forEach(j=>{
+    const scenarioSelect =
+        document.getElementById("assessmentScenario");
 
-jobsHtml+=`
-<option>${j.name}</option>
-`;
+    const productDiv =
+        document.getElementById("productSelection");
 
-});
+    if(!jobSelect || !scenarioSelect || !productDiv){
+        return;
+    }
 
-document.getElementById(
-"assessmentJob"
-).innerHTML=jobsHtml;
+    let jobsHtml = "";
 
+    jobs.forEach(j=>{
+        jobsHtml += `<option>${j.name}</option>`;
+    });
 
-let scenarioHtml="";
+    jobSelect.innerHTML = jobsHtml;
 
-scenarios.forEach(s=>{
+    let scenarioHtml = "";
 
-scenarioHtml+=`
-<option>${s.name}</option>
-`;
+    scenarios.forEach(s=>{
+        scenarioHtml += `<option>${s.name}</option>`;
+    });
 
-});
+    scenarioSelect.innerHTML = scenarioHtml;
 
-document.getElementById(
-"assessmentScenario"
-).innerHTML=scenarioHtml;
+    let productHtml = "";
 
+    products.forEach((p,index)=>{
+        productHtml += `
+            <label>
+                <input
+                    type="checkbox"
+                    class="assessmentProduct"
+                    value="${p.name}">
+                ${p.name}
+            </label><br>
+        `;
+    });
 
-let productHtml="";
-
-products.forEach((p,index)=>{
-
-productHtml+=`
-<label>
-<input
-type="checkbox"
-class="assessmentProduct"
-value="${p.name}">
-${p.name}
-</label><br>
-`;
-
-});
+    productDiv.innerHTML = productHtml;
+}
 
 document.getElementById(
 "productSelection"
@@ -1162,7 +1166,10 @@ function generateAssessment(){
     scenarios.find(
         s => s.name === scenarioName
     );
-
+if(!scenario){
+    alert("Brak scenariusza.");
+    return;
+}
     let hazardScore = 0;
 
     let identifiedRisks = [];
@@ -1358,6 +1365,8 @@ function generateAssessment(){
     </ul>
 
 </div>
-
+</script>
+</body>
+</html>
 `;
 }
