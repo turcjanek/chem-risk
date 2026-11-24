@@ -1249,10 +1249,10 @@ Math.max(
 
  const mainProduct =
 selectedProducts[0];
-
+console.log(mainProduct);
 const stateScore =
 getStateScore(
-    mainProduct.physicalState
+    mainProduct.physicalState || "Ciecz"
 );
 
 const methodScore =
