@@ -472,972 +472,1897 @@ Brak wygenerowanej oceny.
 
 </div>
 
-<script>
+<script type="module">
+import * as pdfjsLib from "pdfjs-dist";
+
+/* =========================================================
+   CHEMRISK V2
+   Pełny poprawiony skrypt
+   ========================================================= */
+
+/* -------------------------
+   DANE APLIKACJI
+   ------------------------- */
 
 let products = [];
 let jobs = [];
 let scenarios = [];
 
-try{
-    products =
-        JSON.parse(localStorage.getItem("products")) || [];
+try {
+    products = JSON.parse(localStorage.getItem("products")) || [];
+    jobs = JSON.parse(localStorage.getItem("jobs")) || [];
+    scenarios = JSON.parse(localStorage.getItem("scenarios")) || [];
+} catch (error) {
+    console.error("Błąd odczytu danych:", error);
 
-    jobs =
-        JSON.parse(localStorage.getItem("jobs")) || [];
-
-    scenarios =
-        JSON.parse(localStorage.getItem("scenarios")) || [];
-}
-catch(err){
-    console.error(err);
+    products = [];
+    jobs = [];
+    scenarios = [];
 
     localStorage.removeItem("products");
     localStorage.removeItem("jobs");
     localStorage.removeItem("scenarios");
 }
-function showProductPdf(){
 
-    const file =
-    document.getElementById("productPdf");
+/* -------------------------
+   SŁOWNIK ZAGROŻEŃ
+   ------------------------- */
 
-    if(file.files.length > 0){
+const hazardDictionary = {
+    H200: {
+        category: "Materiały wybuchowe",
+        risk: "Materiał wybuchowy niestabilny."
+    },
+    H201: {
+        category: "Materiały wybuchowe",
+        risk: "Materiał wybuchowy; zagrożenie wybuchem masowym."
+    },
+    H202: {
+        category: "Materiały wybuchowe",
+        risk: "Materiał wybuchowy; poważne zagrożenie rozrzutem."
+    },
+    H203: {
+        category: "Materiały wybuchowe",
+        risk: "Materiał wybuchowy; zagrożenie pożarem, wybuchem lub rozrzutem."
+    },
+    H204: {
+        category: "Materiały wybuchowe",
+        risk: "Zagrożenie pożarem lub rozrzutem."
+    },
+    H220: {
+        category: "Gazy łatwopalne",
+        risk: "Skrajnie łatwopalny gaz."
+    },
+    H221: {
+        category: "Gazy łatwopalne",
+        risk: "Gaz łatwopalny."
+    },
+    H222: {
+        category: "Aerozole łatwopalne",
+        risk: "Skrajnie łatwopalny aerozol."
+    },
+    H223: {
+        category: "Aerozole łatwopalne",
+        risk: "Łatwopalny aerozol."
+    },
+    H224: {
+        category: "Ciecze łatwopalne",
+        risk: "Skrajnie łatwopalna ciecz i pary."
+    },
+    H225: {
+        category: "Ciecze łatwopalne",
+        risk: "Wysoce łatwopalna ciecz i pary."
+    },
+    H226: {
+        category: "Ciecze łatwopalne",
+        risk: "Łatwopalna ciecz i pary."
+    },
+    H228: {
+        category: "Substancje stałe łatwopalne",
+        risk: "Substancja stała łatwopalna."
+    },
+    H229: {
+        category: "Pojemniki pod ciśnieniem",
+        risk: "Pojemnik pod ciśnieniem: ogrzanie grozi wybuchem."
+    },
+    H270: {
+        category: "Substancje utleniające",
+        risk: "Może spowodować lub intensyfikować pożar."
+    },
+    H271: {
+        category: "Substancje utleniające",
+        risk: "Może spowodować pożar lub wybuch."
+    },
+    H272: {
+        category: "Substancje utleniające",
+        risk: "Może intensyfikować pożar."
+    },
+    H280: {
+        category: "Gazy pod ciśnieniem",
+        risk: "Zawiera gaz pod ciśnieniem; ogrzanie grozi wybuchem."
+    },
+    H281: {
+        category: "Gazy schłodzone",
+        risk: "Zawiera schłodzony gaz; może powodować oparzenia kriogeniczne."
+    },
+    H290: {
+        category: "Działanie korozyjne na metale",
+        risk: "Może powodować korozję metali."
+    },
+    H300: {
+        category: "Toksyczność ostra",
+        risk: "Połknięcie grozi śmiercią."
+    },
+    H301: {
+        category: "Toksyczność ostra",
+        risk: "Działa toksycznie po połknięciu."
+    },
+    H302: {
+        category: "Toksyczność ostra",
+        risk: "Działa szkodliwie po połknięciu."
+    },
+    H304: {
+        category: "Zagrożenie spowodowane aspiracją",
+        risk: "Połknięcie i dostanie się przez drogi oddechowe może grozić śmiercią."
+    },
+    H310: {
+        category: "Toksyczność ostra",
+        risk: "Grozi śmiercią w kontakcie ze skórą."
+    },
+    H311: {
+        category: "Toksyczność ostra",
+        risk: "Działa toksycznie w kontakcie ze skórą."
+    },
+    H312: {
+        category: "Toksyczność ostra",
+        risk: "Działa szkodliwie w kontakcie ze skórą."
+    },
+    H314: {
+        category: "Działanie żrące",
+        risk: "Powoduje poważne oparzenia skóry oraz uszkodzenia oczu."
+    },
+    H315: {
+        category: "Działanie drażniące",
+        risk: "Działa drażniąco na skórę."
+    },
+    H317: {
+        category: "Działanie uczulające",
+        risk: "Może powodować reakcję alergiczną skóry."
+    },
+    H318: {
+        category: "Poważne uszkodzenie oczu",
+        risk: "Powoduje poważne uszkodzenie oczu."
+    },
+    H319: {
+        category: "Działanie drażniące",
+        risk: "Działa drażniąco na oczy."
+    },
+    H330: {
+        category: "Toksyczność ostra",
+        risk: "Wdychanie grozi śmiercią."
+    },
+    H331: {
+        category: "Toksyczność ostra",
+        risk: "Działa toksycznie w następstwie wdychania."
+    },
+    H332: {
+        category: "Toksyczność ostra",
+        risk: "Działa szkodliwie w następstwie wdychania."
+    },
+    H334: {
+        category: "Działanie uczulające",
+        risk: "Może powodować objawy alergii lub astmy albo trudności w oddychaniu."
+    },
+    H335: {
+        category: "Działanie drażniące",
+        risk: "Może powodować podrażnienie dróg oddechowych."
+    },
+    H336: {
+        category: "Działanie narkotyczne",
+        risk: "Może wywoływać uczucie senności lub zawroty głowy."
+    },
+    H340: {
+        category: "Działanie mutagenne",
+        risk: "Może powodować wady genetyczne."
+    },
+    H341: {
+        category: "Działanie mutagenne",
+        risk: "Podejrzewa się, że powoduje wady genetyczne."
+    },
+    H350: {
+        category: "Działanie rakotwórcze",
+        risk: "Może powodować raka."
+    },
+    H350I: {
+        category: "Działanie rakotwórcze",
+        risk: "Wdychanie może powodować raka."
+    },
+    H351: {
+        category: "Działanie rakotwórcze",
+        risk: "Podejrzewa się, że powoduje raka."
+    },
+    H360: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Może działać szkodliwie na płodność lub na dziecko w łonie matki."
+    },
+    H360F: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Może działać szkodliwie na płodność."
+    },
+    H360D: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Może działać szkodliwie na dziecko w łonie matki."
+    },
+    H360FD: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Może działać szkodliwie na płodność i na dziecko w łonie matki."
+    },
+    H361: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Podejrzewa się, że działa szkodliwie na płodność lub dziecko w łonie matki."
+    },
+    H361F: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Podejrzewa się, że działa szkodliwie na płodność."
+    },
+    H361D: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Podejrzewa się, że działa szkodliwie na dziecko w łonie matki."
+    },
+    H361FD: {
+        category: "Działanie szkodliwe na rozrodczość",
+        risk: "Podejrzewa się, że działa szkodliwie na płodność i dziecko w łonie matki."
+    },
+    H362: {
+        category: "Wpływ na karmienie piersią",
+        risk: "Może działać szkodliwie na dzieci karmione piersią."
+    },
+    H370: {
+        category: "Toksyczność narządowa",
+        risk: "Powoduje uszkodzenie narządów."
+    },
+    H371: {
+        category: "Toksyczność narządowa",
+        risk: "Może powodować uszkodzenie narządów."
+    },
+    H372: {
+        category: "Toksyczność narządowa",
+        risk: "Powoduje uszkodzenie narządów poprzez długotrwałe lub powtarzane narażenie."
+    },
+    H373: {
+        category: "Toksyczność narządowa",
+        risk: "Może powodować uszkodzenie narządów poprzez długotrwałe lub powtarzane narażenie."
+    }
+};
 
-        document.getElementById("pdfInfo")
-        .innerHTML = `
-        <div class="result">
-            Załączono:
-            <b>${file.files[0].name}</b>
+const hazardBands = {
+    A: [
+        "H315", "H319", "H336"
+    ],
+    B: [
+        "H302", "H312", "H332", "H335", "H371"
+    ],
+    C: [
+        "H301", "H311", "H314", "H317", "H318",
+        "H331", "H341", "H361", "H361F", "H361D",
+        "H361FD", "H362", "H373"
+    ],
+    D: [
+        "H300", "H304", "H310", "H330", "H351",
+        "H360", "H360F", "H360D", "H360FD", "H370",
+        "H372"
+    ],
+    E: [
+        "H334", "H340", "H350", "H350I"
+    ]
+};
+
+/* -------------------------
+   FUNKCJE POMOCNICZE
+   ------------------------- */
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function saveProducts() {
+    localStorage.setItem("products", JSON.stringify(products));
+}
+
+function saveJobs() {
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+}
+
+function saveScenarios() {
+    localStorage.setItem("scenarios", JSON.stringify(scenarios));
+}
+
+function uniqueValues(values) {
+    return [...new Set(
+        values
+            .map(value => String(value).trim().toUpperCase())
+            .filter(Boolean)
+    )];
+}
+
+function splitRecommendations(value) {
+    return String(value || "")
+        .split(/\n|;/)
+        .map(item => item.trim())
+        .filter(Boolean);
+}
+
+/* -------------------------
+   NAWIGACJA
+   ------------------------- */
+
+window.showPage = function(pageId) {
+    document.querySelectorAll(".page").forEach(page => {
+        page.classList.remove("active");
+    });
+
+    const selectedPage = document.getElementById(pageId);
+
+    if (!selectedPage) {
+        console.error("Nie znaleziono strony:", pageId);
+        return;
+    }
+
+    selectedPage.classList.add("active");
+
+    updateDashboard();
+
+    if (pageId === "assessments") {
+        populateAssessmentData();
+    }
+};
+
+/* -------------------------
+   ANALIZA PDF KCh
+   ------------------------- */
+
+function ensurePdfControls() {
+    const fileInput = document.getElementById("productPdf");
+
+    if (!fileInput) {
+        return;
+    }
+
+    fileInput.accept = "application/pdf,.pdf";
+
+    let analyseButton = document.getElementById("analysePdfButton");
+
+    if (!analyseButton) {
+        analyseButton = document.createElement("button");
+        analyseButton.type = "button";
+        analyseButton.id = "analysePdfButton";
+        analyseButton.className = "action";
+        analyseButton.textContent = "Analizuj KCh";
+        analyseButton.style.marginBottom = "12px";
+
+        fileInput.insertAdjacentElement("afterend", analyseButton);
+    }
+
+    let warningBox = document.getElementById("pdfWarnings");
+
+    if (!warningBox) {
+        warningBox = document.createElement("div");
+        warningBox.id = "pdfWarnings";
+
+        const pdfInfo = document.getElementById("pdfInfo");
+
+        if (pdfInfo) {
+            pdfInfo.insertAdjacentElement("afterend", warningBox);
+        }
+    }
+
+    analyseButton.addEventListener("click", analyseProductPdf);
+}
+
+window.showProductPdf = function() {
+    const input = document.getElementById("productPdf");
+    const info = document.getElementById("pdfInfo");
+    const warnings = document.getElementById("pdfWarnings");
+
+    if (warnings) {
+        warnings.innerHTML = "";
+    }
+
+    if (!input || !info) {
+        return;
+    }
+
+    if (!input.files || input.files.length === 0) {
+        info.innerHTML = "";
+        return;
+    }
+
+    const file = input.files[0];
+
+    info.innerHTML = `
+        <div class="status-yellow">
+            Załączono: <b>${escapeHtml(file.name)}</b>.
+            Kliknij „Analizuj KCh”.
         </div>
+    `;
+};
+
+async function extractPdfText(file) {
+    const arrayBuffer = await file.arrayBuffer();
+
+    const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(arrayBuffer),
+        disableWorker: true
+    });
+
+    const pdf = await loadingTask.promise;
+    const pages = [];
+
+    for (
+        let pageNumber = 1;
+        pageNumber <= pdf.numPages;
+        pageNumber++
+    ) {
+        const page = await pdf.getPage(pageNumber);
+        const content = await page.getTextContent();
+
+        const items = content.items
+            .filter(item => item.str && item.str.trim())
+            .map(item => ({
+                text: item.str.trim(),
+                x: item.transform?.[4] ?? 0,
+                y: item.transform?.[5] ?? 0
+            }));
+
+        items.sort((a, b) => {
+            const yDifference = b.y - a.y;
+
+            if (Math.abs(yDifference) > 3) {
+                return yDifference;
+            }
+
+            return a.x - b.x;
+        });
+
+        const pageText = items
+            .map(item => item.text)
+            .join(" ");
+
+        pages.push(pageText);
+    }
+
+    return pages.join("\n\n");
+}
+
+function normalizePdfText(text) {
+    return String(text || "")
+        .replace(/\u00AD/g, "")
+        .replace(/\u00A0/g, " ")
+        .replace(/[–—−]/g, "-")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function getSdsSection(text, sectionNumber, nextSectionNumber) {
+    const normalized = normalizePdfText(text);
+
+    const escapedSection = String(sectionNumber);
+    const escapedNextSection = String(nextSectionNumber);
+
+    const startPatterns = [
+        new RegExp(
+            `(?:SEKCJA|SECTION)\\s*${escapedSection}\\s*[:.]`,
+            "i"
+        ),
+        new RegExp(
+            `(?:SEKCJA|SECTION)\\s+${escapedSection}\\b`,
+            "i"
+        )
+    ];
+
+    let startIndex = -1;
+
+    for (const pattern of startPatterns) {
+        const match = normalized.match(pattern);
+
+        if (match) {
+            startIndex = match.index;
+            break;
+        }
+    }
+
+    if (startIndex === -1) {
+        return "";
+    }
+
+    const remainingText = normalized.slice(startIndex);
+
+    const endPatterns = [
+        new RegExp(
+            `(?:SEKCJA|SECTION)\\s*${escapedNextSection}\\s*[:.]`,
+            "i"
+        ),
+        new RegExp(
+            `(?:SEKCJA|SECTION)\\s+${escapedNextSection}\\b`,
+            "i"
+        )
+    ];
+
+    let endIndex = -1;
+
+    for (const pattern of endPatterns) {
+        const match = remainingText.match(pattern);
+
+        if (match && match.index > 0) {
+            endIndex = match.index;
+            break;
+        }
+    }
+
+    return endIndex === -1
+        ? remainingText
+        : remainingText.slice(0, endIndex);
+}
+
+function extractHazardCodes(text) {
+    const normalized = normalizePdfText(text);
+
+    const hCodes = normalized.match(
+        /\bH\d{3}[A-Za-z]{0,2}\b/g
+    ) || [];
+
+    const euhCodes = normalized.match(
+        /\bEUH\d{3}[A-Za-z]?\b/g
+    ) || [];
+
+    return {
+        hCodes: uniqueValues(hCodes),
+        euhCodes: uniqueValues(euhCodes)
+    };
+}
+
+function convertDateToInputFormat(dateValue) {
+    const value = String(dateValue || "").trim();
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return value;
+    }
+
+    const parts = value.split(/[./-]/);
+
+    if (parts.length !== 3) {
+        return "";
+    }
+
+    let day = parts[0];
+    let month = parts[1];
+    let year = parts[2];
+
+    if (parts[0].length === 4) {
+        year = parts[0];
+        month = parts[1];
+        day = parts[2];
+    }
+
+    day = day.padStart(2, "0");
+    month = month.padStart(2, "0");
+
+    if (year.length !== 4) {
+        return "";
+    }
+
+    return `${year}-${month}-${day}`;
+}
+
+function extractDateFromSds(text) {
+    const firstPart = normalizePdfText(text).slice(0, 8000);
+
+    const patterns = [
+        /(?:data\s+(?:wydania|aktualizacji|sporządzenia|rewizji|przeglądu))\s*[:\-]?\s*(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})/i,
+        /(?:revision\s+date|issue\s+date|date\s+of\s+revision)\s*[:\-]?\s*(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = firstPart.match(pattern);
+
+        if (match) {
+            return convertDateToInputFormat(match[1]);
+        }
+    }
+
+    return "";
+}
+
+function extractVersionFromSds(text) {
+    const firstPart = normalizePdfText(text).slice(0, 8000);
+
+    const patterns = [
+        /(?:numer\s+wersji|wersja|version)\s*[:\-]?\s*([0-9]+(?:[.,][0-9]+)*)/i,
+        /(?:revision|rewizja)\s*[:\-]?\s*([0-9]+(?:[.,][0-9]+)*)/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = firstPart.match(pattern);
+
+        if (match) {
+            return match[1].replace(",", ".");
+        }
+    }
+
+    return "";
+}
+
+function extractProductName(text) {
+    const firstPart = normalizePdfText(text).slice(0, 5000);
+
+    const patterns = [
+        /(?:nazwa\s+handlowa|nazwa\s+produktu|product\s+name|trade\s+name)\s*[:\-]\s*([^.;]{2,120})/i,
+        /1\.1\s+(?:identyfikator\s+produktu|product\s+identifier)\s*[:\-]?\s*([^.;]{2,120})/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = firstPart.match(pattern);
+
+        if (match) {
+            return match[1].trim();
+        }
+    }
+
+    return "";
+}
+
+function extractPhysicalState(section9) {
+    const text = normalizePdfText(section9).toLowerCase();
+
+    if (/\baerozol\b|\baerosol\b/.test(text)) {
+        return "Aerozol";
+    }
+
+    if (/\bgaz\b|\bgaseous\b/.test(text)) {
+        return "Gaz";
+    }
+
+    if (/\bpył\b|\bproszek\b|\bpowder\b|\bdust\b/.test(text)) {
+        return "Pył";
+    }
+
+    if (/\bciecz\b|\bpłyn\b|\bliquid\b/.test(text)) {
+        return "Ciecz";
+    }
+
+    if (
+        /\bciało stałe\b|\bsubstancja stała\b|\bsolid\b/.test(text)
+    ) {
+        return "Ciało stałe";
+    }
+
+    return "";
+}
+
+function extractMatchingSentences(text, keywords, limit = 12) {
+    const normalized = normalizePdfText(text);
+
+    if (!normalized) {
+        return "";
+    }
+
+    const fragments = normalized.split(
+        /(?<=[.!?;])\s+|(?=\b8\.\d+(?:\.\d+)?\b)/i
+    );
+
+    const matches = fragments.filter(fragment => {
+        const lowerFragment = fragment.toLowerCase();
+
+        return keywords.some(keyword =>
+            lowerFragment.includes(keyword)
+        );
+    });
+
+    return [...new Set(matches)]
+        .slice(0, limit)
+        .join("\n");
+}
+
+function extractPpeData(section8) {
+    return extractMatchingSentences(
+        section8,
+        [
+            "ochrona dróg oddechowych",
+            "ochrona rąk",
+            "ochrona oczu",
+            "ochrona twarzy",
+            "ochrona skóry",
+            "rękawice",
+            "okulary",
+            "gogle",
+            "maska",
+            "półmaska",
+            "respirator",
+            "aparat oddechowy",
+            "filtr",
+            "odzież ochronna",
+            "respiratory protection",
+            "hand protection",
+            "eye protection",
+            "face protection",
+            "skin protection",
+            "protective gloves",
+            "safety goggles"
+        ],
+        12
+    );
+}
+
+function extractTechnicalControls(section8) {
+    return extractMatchingSentences(
+        section8,
+        [
+            "wentylacja",
+            "wentylację",
+            "wyciąg",
+            "odciąg",
+            "hermetyzacja",
+            "układ zamknięty",
+            "płuczka do oczu",
+            "prysznic bezpieczeństwa",
+            "engineering controls",
+            "local exhaust",
+            "mechanical ventilation",
+            "closed system",
+            "eyewash"
+        ],
+        10
+    );
+}
+
+async function analyseProductPdf() {
+    const input = document.getElementById("productPdf");
+    const info = document.getElementById("pdfInfo");
+    const warnings = document.getElementById("pdfWarnings");
+    const button = document.getElementById("analysePdfButton");
+
+    if (!input || !info) {
+        return;
+    }
+
+    if (warnings) {
+        warnings.innerHTML = "";
+    }
+
+    if (!input.files || input.files.length === 0) {
+        info.innerHTML = `
+            <div class="status-red">
+                Najpierw wybierz plik KCh w formacie PDF.
+            </div>
         `;
+        return;
+    }
+
+    const file = input.files[0];
+
+    if (
+        file.type !== "application/pdf" &&
+        !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+        info.innerHTML = `
+            <div class="status-red">
+                Wybrany plik nie jest dokumentem PDF.
+            </div>
+        `;
+        return;
+    }
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Analizowanie KCh...";
+    }
+
+    info.innerHTML = `
+        <div class="status-yellow">
+            Odczytywanie dokumentu:
+            <b>${escapeHtml(file.name)}</b>
+        </div>
+    `;
+
+    try {
+        const rawText = await extractPdfText(file);
+        const normalizedText = normalizePdfText(rawText);
+
+        if (normalizedText.length < 200) {
+            throw new Error(
+                "Dokument nie zawiera warstwy tekstowej albo jest skanem. " +
+                "Taki dokument wymaga OCR."
+            );
+        }
+
+        const section2 = getSdsSection(rawText, 2, 3);
+        const section8 = getSdsSection(rawText, 8, 9);
+        const section9 = getSdsSection(rawText, 9, 10);
+
+        /*
+         * Zwroty H i EUH pobieramy przede wszystkim z sekcji 2.
+         * Nie należy automatycznie pobierać wszystkich kodów
+         * składników z sekcji 3.
+         */
+        let codes = extractHazardCodes(section2);
+
+        if (
+            codes.hCodes.length === 0 &&
+            codes.euhCodes.length === 0
+        ) {
+            codes = extractHazardCodes(rawText);
+        }
+
+        const ppe = extractPpeData(section8);
+        const technical = extractTechnicalControls(section8);
+        const physicalState = extractPhysicalState(section9);
+        const version = extractVersionFromSds(rawText);
+        const date = extractDateFromSds(rawText);
+        const productName = extractProductName(rawText);
+
+        const hCodesInput = document.getElementById("hCodes");
+        const euhCodesInput = document.getElementById("euhCodes");
+        const ppeInput = document.getElementById("ppeData");
+        const technicalInput = document.getElementById("technicalData");
+        const physicalStateInput =
+            document.getElementById("physicalState");
+        const versionInput = document.getElementById("kchVersion");
+        const dateInput = document.getElementById("kchDate");
+        const productNameInput =
+            document.getElementById("productName");
+
+        if (hCodesInput) {
+            hCodesInput.value = codes.hCodes.join(", ");
+        }
+
+        if (euhCodesInput) {
+            euhCodesInput.value = codes.euhCodes.join(", ");
+        }
+
+        if (ppeInput && ppe) {
+            ppeInput.value = ppe;
+        }
+
+        if (technicalInput && technical) {
+            technicalInput.value = technical;
+        }
+
+        if (physicalStateInput && physicalState) {
+            physicalStateInput.value = physicalState;
+        }
+
+        if (versionInput && version) {
+            versionInput.value = version;
+        }
+
+        if (dateInput && date) {
+            dateInput.value = date;
+        }
+
+        if (
+            productNameInput &&
+            !productNameInput.value.trim() &&
+            productName
+        ) {
+            productNameInput.value = productName;
+        }
+
+        const missing = [];
+
+        if (codes.hCodes.length === 0) {
+            missing.push("zwrotów H w sekcji 2");
+        }
+
+        if (!ppe) {
+            missing.push("informacji o ŚOI w sekcji 8");
+        }
+
+        if (!technical) {
+            missing.push("środków technicznych w sekcji 8");
+        }
+
+        if (!physicalState) {
+            missing.push("stanu skupienia w sekcji 9");
+        }
+
+        info.innerHTML = `
+            <div class="status-green">
+                KCh została odczytana.
+                Znaleziono ${codes.hCodes.length} zwrotów H
+                i ${codes.euhCodes.length} zwrotów EUH.
+            </div>
+        `;
+
+        if (warnings && missing.length > 0) {
+            warnings.innerHTML = `
+                <div class="status-yellow">
+                    Nie znaleziono automatycznie:
+                    ${missing.map(escapeHtml).join(", ")}.
+                    Sprawdź dane ręcznie przed zapisaniem produktu.
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error("Błąd analizy KCh:", error);
+
+        info.innerHTML = `
+            <div class="status-red">
+                Nie udało się przeanalizować dokumentu:
+                ${escapeHtml(error.message)}
+            </div>
+        `;
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Analizuj KCh";
+        }
     }
 }
 
-function getHazardBand(code){
+/* Udostępnienie również dla ewentualnego onclick w HTML. */
+window.analyseProductPdf = analyseProductPdf;
 
-    for(const band in hazardBands){
+/* -------------------------
+   STATUS KCh
+   ------------------------- */
 
-        if(hazardBands[band].includes(code)){
-            return band;
+function getStatus(dateString) {
+    if (!dateString) {
+        return '<span class="status-red">Brak daty</span>';
+    }
+
+    const today = new Date();
+    const kchDate = new Date(`${dateString}T00:00:00`);
+
+    if (Number.isNaN(kchDate.getTime())) {
+        return '<span class="status-red">Błędna data</span>';
+    }
+
+    const years =
+        (today - kchDate) /
+        (1000 * 60 * 60 * 24 * 365.25);
+
+    if (years < 3) {
+        return '<span class="status-green">🟢 Aktualna</span>';
+    }
+
+    if (years < 5) {
+        return '<span class="status-yellow">🟡 Przegląd</span>';
+    }
+
+    return '<span class="status-red">🔴 Weryfikacja</span>';
+}
+
+/* -------------------------
+   PRODUKTY
+   ------------------------- */
+
+window.addProduct = function() {
+    const fileInput = document.getElementById("productPdf");
+
+    const product = {
+        name: document.getElementById("productName")?.value.trim() || "",
+        manufacturer:
+            document.getElementById("manufacturer")?.value.trim() || "",
+        physicalState:
+            document.getElementById("physicalState")?.value || "Ciecz",
+        version:
+            document.getElementById("kchVersion")?.value.trim() || "",
+        date:
+            document.getElementById("kchDate")?.value || "",
+        pdf:
+            fileInput?.files?.length > 0
+                ? fileInput.files[0].name
+                : "",
+        hCodes:
+            document.getElementById("hCodes")?.value.trim() || "",
+        euhCodes:
+            document.getElementById("euhCodes")?.value.trim() || "",
+        ppe:
+            document.getElementById("ppeData")?.value.trim() || "",
+        technical:
+            document.getElementById("technicalData")?.value.trim() || "",
+        organisation:
+            document.getElementById("organisationData")?.value.trim() || "",
+        extractionStatus:
+            fileInput?.files?.length > 0
+                ? "Wymaga weryfikacji"
+                : "Wprowadzono ręcznie"
+    };
+
+    if (!product.name) {
+        alert("Podaj nazwę produktu.");
+        return;
+    }
+
+    products.push(product);
+    saveProducts();
+
+    renderProducts();
+    updateDashboard();
+    populateAssessmentData();
+    clearProductForm();
+};
+
+function clearProductForm() {
+    const ids = [
+        "productName",
+        "manufacturer",
+        "kchVersion",
+        "kchDate",
+        "hCodes",
+        "euhCodes",
+        "ppeData",
+        "technicalData",
+        "organisationData",
+        "productPdf"
+    ];
+
+    ids.forEach(id => {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.value = "";
+        }
+    });
+
+    const physicalState = document.getElementById("physicalState");
+
+    if (physicalState) {
+        physicalState.selectedIndex = 0;
+    }
+
+    const pdfInfo = document.getElementById("pdfInfo");
+    const pdfWarnings = document.getElementById("pdfWarnings");
+
+    if (pdfInfo) {
+        pdfInfo.innerHTML = "";
+    }
+
+    if (pdfWarnings) {
+        pdfWarnings.innerHTML = "";
+    }
+}
+
+function renderProducts() {
+    const table = document.getElementById("productTable");
+
+    if (!table) {
+        return;
+    }
+
+    table.innerHTML = products.map((product, index) => `
+        <tr>
+            <td>${escapeHtml(product.name)}</td>
+            <td>${escapeHtml(product.manufacturer)}</td>
+            <td>${escapeHtml(product.version)}</td>
+            <td>${escapeHtml(product.date)}</td>
+            <td>${escapeHtml(product.hCodes)}</td>
+            <td>${getStatus(product.date)}</td>
+            <td>${escapeHtml(product.physicalState)}</td>
+            <td>
+                <button
+                    type="button"
+                    onclick="deleteProduct(${index})">
+                    Usuń
+                </button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+window.deleteProduct = function(index) {
+    if (!Number.isInteger(index) || !products[index]) {
+        return;
+    }
+
+    products.splice(index, 1);
+    saveProducts();
+
+    renderProducts();
+    updateDashboard();
+    populateAssessmentData();
+};
+
+/* -------------------------
+   STANOWISKA
+   ------------------------- */
+
+window.addJob = function() {
+    const job = {
+        name: document.getElementById("jobName")?.value.trim() || "",
+        location:
+            document.getElementById("jobLocation")?.value.trim() || "",
+        workers:
+            document.getElementById("jobWorkers")?.value || "",
+        description:
+            document.getElementById("jobDescription")?.value.trim() || ""
+    };
+
+    if (!job.name) {
+        alert("Podaj nazwę stanowiska.");
+        return;
+    }
+
+    jobs.push(job);
+    saveJobs();
+
+    renderJobs();
+    updateDashboard();
+    populateAssessmentData();
+
+    document.getElementById("jobName").value = "";
+    document.getElementById("jobLocation").value = "";
+    document.getElementById("jobWorkers").value = "";
+    document.getElementById("jobDescription").value = "";
+};
+
+function renderJobs() {
+    const table = document.getElementById("jobTable");
+
+    if (!table) {
+        return;
+    }
+
+    table.innerHTML = jobs.map((job, index) => `
+        <tr>
+            <td>${escapeHtml(job.name)}</td>
+            <td>${escapeHtml(job.location)}</td>
+            <td>${escapeHtml(job.workers)}</td>
+            <td>
+                <button
+                    type="button"
+                    onclick="deleteJob(${index})">
+                    Usuń
+                </button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+window.deleteJob = function(index) {
+    if (!Number.isInteger(index) || !jobs[index]) {
+        return;
+    }
+
+    jobs.splice(index, 1);
+    saveJobs();
+
+    renderJobs();
+    updateDashboard();
+    populateAssessmentData();
+};
+
+/* -------------------------
+   SCENARIUSZE
+   ------------------------- */
+
+window.addScenario = function() {
+    const scenario = {
+        name:
+            document.getElementById("scenarioName")?.value.trim() || "",
+        method:
+            document.getElementById("scenarioMethod")?.value || "",
+        time:
+            document.getElementById("scenarioTime")?.value || "",
+        vent:
+            document.getElementById("scenarioVent")?.value || "",
+        amount:
+            document.getElementById("scenarioAmount")?.value || "",
+        frequency:
+            document.getElementById("scenarioFrequency")?.value || ""
+    };
+
+    if (!scenario.name) {
+        alert("Podaj nazwę scenariusza.");
+        return;
+    }
+
+    scenarios.push(scenario);
+    saveScenarios();
+
+    renderScenarios();
+    updateDashboard();
+    populateAssessmentData();
+
+    document.getElementById("scenarioName").value = "";
+};
+
+function renderScenarios() {
+    const table = document.getElementById("scenarioTable");
+
+    if (!table) {
+        return;
+    }
+
+    table.innerHTML = scenarios.map((scenario, index) => `
+        <tr>
+            <td>${escapeHtml(scenario.name)}</td>
+            <td>${escapeHtml(scenario.method)}</td>
+            <td>${escapeHtml(scenario.time)}</td>
+            <td>${escapeHtml(scenario.vent)}</td>
+            <td>${escapeHtml(scenario.amount)}</td>
+            <td>${escapeHtml(scenario.frequency)}</td>
+            <td>
+                <button
+                    type="button"
+                    onclick="deleteScenario(${index})">
+                    Usuń
+                </button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+window.deleteScenario = function(index) {
+    if (!Number.isInteger(index) || !scenarios[index]) {
+        return;
+    }
+
+    scenarios.splice(index, 1);
+    saveScenarios();
+
+    renderScenarios();
+    updateDashboard();
+    populateAssessmentData();
+};
+
+/* -------------------------
+   DASHBOARD
+   ------------------------- */
+
+function updateDashboard() {
+    const productCount = document.getElementById("productCount");
+    const jobCount = document.getElementById("jobCount");
+    const scenarioCount = document.getElementById("scenarioCount");
+    const expiredCount = document.getElementById("expiredCount");
+
+    if (productCount) {
+        productCount.textContent = products.length;
+    }
+
+    if (jobCount) {
+        jobCount.textContent = jobs.length;
+    }
+
+    if (scenarioCount) {
+        scenarioCount.textContent = scenarios.length;
+    }
+
+    let expired = 0;
+
+    products.forEach(product => {
+        if (!product.date) {
+            expired++;
+            return;
         }
 
+        const date = new Date(`${product.date}T00:00:00`);
+
+        if (Number.isNaN(date.getTime())) {
+            expired++;
+            return;
+        }
+
+        const years =
+            (new Date() - date) /
+            (1000 * 60 * 60 * 24 * 365.25);
+
+        if (years >= 5) {
+            expired++;
+        }
+    });
+
+    if (expiredCount) {
+        expiredCount.textContent = expired;
+    }
+}
+
+/* -------------------------
+   DANE DO OCENY
+   ------------------------- */
+
+function populateAssessmentData() {
+    const jobSelect = document.getElementById("assessmentJob");
+    const scenarioSelect =
+        document.getElementById("assessmentScenario");
+    const productDiv =
+        document.getElementById("productSelection");
+
+    if (!jobSelect || !scenarioSelect || !productDiv) {
+        return;
+    }
+
+    jobSelect.innerHTML = jobs.length
+        ? jobs.map((job, index) => `
+            <option value="${index}">
+                ${escapeHtml(job.name)}
+            </option>
+        `).join("")
+        : '<option value="">Brak stanowisk</option>';
+
+    scenarioSelect.innerHTML = scenarios.length
+        ? scenarios.map((scenario, index) => `
+            <option value="${index}">
+                ${escapeHtml(scenario.name)}
+            </option>
+        `).join("")
+        : '<option value="">Brak scenariuszy</option>';
+
+    productDiv.innerHTML = products.length
+        ? products.map((product, index) => `
+            <label>
+                <input
+                    type="checkbox"
+                    class="assessmentProduct"
+                    value="${index}">
+                ${escapeHtml(product.name)}
+            </label>
+            <br>
+        `).join("")
+        : '<div class="status-yellow">Brak produktów.</div>';
+}
+
+/* -------------------------
+   MODEL OCENY
+   ------------------------- */
+
+function getHazardBand(code) {
+    const normalizedCode = String(code || "").toUpperCase();
+
+    for (const band in hazardBands) {
+        if (hazardBands[band].includes(normalizedCode)) {
+            return band;
+        }
     }
 
     return "A";
 }
 
-function getBandScore(band){
-
-    switch(band){
-
-        case "A": return 1;
-        case "B": return 2;
-        case "C": return 3;
-        case "D": return 4;
-        case "E": return 5;
-
-        default: return 1;
+function getBandScore(band) {
+    switch (band) {
+        case "A":
+            return 1;
+        case "B":
+            return 2;
+        case "C":
+            return 3;
+        case "D":
+            return 4;
+        case "E":
+            return 5;
+        default:
+            return 1;
     }
-
-}
-    
-function showPage(page){
-
-document
-.querySelectorAll(".page")
-.forEach(p=>p.classList.remove("active"));
-
-document
-.getElementById(page)
-.classList.add("active");
-
-updateDashboard();
 }
 
-function getStatus(dateString){
-
-if(!dateString) return "brak";
-
-const today = new Date();
-
-const kchDate = new Date(dateString);
-
-const years =
-(today - kchDate) /
-(1000*60*60*24*365);
-
-if(years < 3)
-return '<span class="status-green">🟢 Aktualna</span>';
-
-if(years < 5)
-return '<span class="status-yellow">🟡 Przegląd</span>';
-
-return '<span class="status-red">🔴 Weryfikacja</span>';
-}
-
-   function addProduct(){
-
-const file =
-document.getElementById("productPdf");
-
-const product = {
-
-name:
-document.getElementById("productName").value,
-
-manufacturer:
-document.getElementById("manufacturer").value,
-
-physicalState:
-document.getElementById("physicalState").value,
-
-version:
-document.getElementById("kchVersion").value,
-
-date:
-document.getElementById("kchDate").value,
-
-pdf:
-file.files.length > 0
-? file.files[0].name
-: "",
-
-hCodes:
-document.getElementById("hCodes").value,
-
-euhCodes:
-document.getElementById("euhCodes").value,
-
-ppe:
-document.getElementById("ppeData").value,
-
-technical:
-document.getElementById("technicalData").value,
-
-organisation:
-document.getElementById("organisationData").value
-    
-};
-
-if(product.name===""){
-alert("Podaj nazwę produktu");
-return;
-}
-
-products.push(product);
-
-localStorage.setItem(
-"products",
-JSON.stringify(products)
-);
-
-renderProducts();
-updateDashboard();
-populateAssessmentData();
-    
-document.getElementById("productName").value="";
-document.getElementById("manufacturer").value="";
-document.getElementById("kchVersion").value="";
-document.getElementById("kchDate").value="";
-document.getElementById("hCodes").value="";
-document.getElementById("euhCodes").value="";
-document.getElementById("pdfInfo").innerHTML="";
-document.getElementById("ppeData").value = "";
-document.getElementById("technicalData").value = "";
-document.getElementById("organisationData").value = "";
-document.getElementById("productPdf").value = "";
-document.getElementById("physicalState").selectedIndex = 0;
-}
-
-function renderProducts(){
-
-let html="";
-
-products.forEach((p,index)=>{
-
-html+=`
-<tr>
-<td>${p.name}</td>
-<td>${p.manufacturer}</td>
-<td>${p.physicalState || ""}</td>
-<td>${p.version || ""}</td>
-<td>${p.date}</td>
-<td>${p.hCodes || ""}</td>
-<td>${getStatus(p.date)}</td>
-<td>
-<button onclick="deleteProduct(${index})">
-Usuń
-</button>
-</td>
-</tr>
-`;
-
-});
-
-document
-.getElementById("productTable")
-.innerHTML = html;
-}
-
-function deleteProduct(index){
-    products.splice(index,1);
-
-    localStorage.setItem(
-        "products",
-        JSON.stringify(products)
-    );
-
-    renderProducts();
-    updateDashboard();
-    populateAssessmentData();
-}
-
-function addJob(){
-
-const job = {
-
-name:
-document.getElementById("jobName").value,
-
-location:
-document.getElementById("jobLocation").value,
-
-workers:
-document.getElementById("jobWorkers").value,
-
-description:
-document.getElementById("jobDescription").value
-
-};
-
-if(job.name==="") return;
-
-jobs.push(job);
-
-localStorage.setItem(
-"jobs",
-JSON.stringify(jobs)
-);
-
-renderJobs();
-updateDashboard();
-populateAssessmentData();
-}
-
-function renderJobs(){
-
-let html="";
-
-jobs.forEach((j,index)=>{
-
-html+=`
-<tr>
-<td>${j.name}</td>
-<td>${j.location}</td>
-<td>${j.workers}</td>
-<td>
-<button onclick="deleteJob(${index})">
-Usuń
-</button>
-</td>
-</tr>
-`;
-
-});
-
-document
-.getElementById("jobTable")
-.innerHTML=html;
-}
-
-function deleteJob(index){
-
-jobs.splice(index,1);
-
-localStorage.setItem(
-"jobs",
-JSON.stringify(jobs)
-);
-
-renderJobs();
-updateDashboard();
-}
-
-function addScenario(){
-
-const scenario={
-
-name:
-document.getElementById("scenarioName").value,
-
-method:
-document.getElementById("scenarioMethod").value,
-
-time:
-document.getElementById("scenarioTime").value,
-
-vent:
-document.getElementById("scenarioVent").value,
-
-amount:
-document.getElementById("scenarioAmount").value,
-
-frequency:
-document.getElementById("scenarioFrequency").value
-
-};
-
-if(scenario.name==="") return;
-
-scenarios.push(scenario);
-
-localStorage.setItem(
-"scenarios",
-JSON.stringify(scenarios)
-);
-
-renderScenarios();
-updateDashboard();
-populateAssessmentData();
-}
-
-function renderScenarios(){
-
-let html="";
-
-scenarios.forEach((s,index)=>{
-
-html+=`
-<tr>
-<td>${s.name}</td>
-<td>${s.method}</td>
-<td>${s.time}</td>
-<td>${s.vent}</td>
-<td>${s.amount}</td>
-<td>${s.frequency}</td>
-<td>
-<button onclick="deleteScenario(${index})">
-Usuń
-</button>
-</td>
-</tr>
-`;
-
-});
-
-document
-.getElementById("scenarioTable")
-.innerHTML=html;
-}
-
-function deleteScenario(index){
-
-scenarios.splice(index,1);
-
-localStorage.setItem(
-"scenarios",
-JSON.stringify(scenarios)
-);
-
-renderScenarios();
-updateDashboard();
-}
-
-function updateDashboard(){
-
-document
-.getElementById("productCount")
-.innerText=products.length;
-
-document
-.getElementById("jobCount")
-.innerText=jobs.length;
-
-document
-.getElementById("scenarioCount")
-.innerText=scenarios.length;
-
-let expired=0;
-
-products.forEach(p=>{
-
-if(!p.date) return;
-
-const years =
-(new Date()-new Date(p.date))
-/
-(1000*60*60*24*365);
-
-if(years>=5)
-expired++;
-
-});
-
-document
-.getElementById("expiredCount")
-.innerText=expired;
-}
-
-renderProducts();
-renderJobs();
-renderScenarios();
-updateDashboard();
-populateAssessmentData();
-
-function populateAssessmentData(){
-
-    const jobSelect =
-        document.getElementById("assessmentJob");
-
-    const scenarioSelect =
-        document.getElementById("assessmentScenario");
-
-    const productDiv =
-        document.getElementById("productSelection");
-
-    if(!jobSelect || !scenarioSelect || !productDiv){
-        return;
-    }
-
-    let jobsHtml = "";
-
-    jobs.forEach(j=>{
-        jobsHtml += `<option>${j.name}</option>`;
-    });
-
-    jobSelect.innerHTML = jobsHtml;
-
-    let scenarioHtml = "";
-
-    scenarios.forEach(s=>{
-        scenarioHtml += `<option>${s.name}</option>`;
-    });
-
-    scenarioSelect.innerHTML = scenarioHtml;
-
-    let productHtml = "";
-
-    products.forEach((p,index)=>{
-        productHtml += `
-            <label>
-                <input
-                    type="checkbox"
-                    class="assessmentProduct"
-                    value="${p.name}">
-                ${p.name}
-            </label><br>
-        `;
-    });
-
-    productDiv.innerHTML = productHtml;
-}
-
-const hazardBands = {
-
-A : ["H315","H319","H336"],
-B : ["H302","H312","H332","H371"],
-C : ["H301","H311","H314","H317","H331"],
-D : ["H300","H310","H330","H351","H360"],
-E : ["H334","H340","H350"]
-
-};
-    function getFrequencyFactor(freq){
-
-    switch(freq){
-
+function getFrequencyFactor(frequency) {
+    switch (frequency) {
         case "Sporadycznie":
             return 0.5;
-
         case "Miesięcznie":
             return 0.75;
-
         case "Tygodniowo":
             return 1;
-
         case "Codziennie":
             return 1.25;
-
         default:
             return 1;
     }
 }
-    function getStateScore(state){
 
-    switch(state){
-
+function getStateScore(state) {
+    switch (state) {
         case "Gaz":
             return 5;
-
         case "Aerozol":
             return 4;
-
         case "Pył":
             return 4;
-
         case "Ciecz":
             return 2;
-
         case "Ciało stałe":
             return 1;
-
         default:
             return 1;
     }
-
 }
 
-    function getMethodScore(method){
-
-    switch(method){
-
+function getMethodScore(method) {
+    switch (method) {
         case "Natrysk":
             return 4;
-
         case "Przelewanie":
             return 3;
-
         case "Mycie":
             return 2;
-
         case "Dozowanie":
             return 1;
-
         case "Układ zamknięty":
             return 0;
-
         default:
             return 1;
     }
-
 }
 
-    function getTimeScore(time){
-
-    switch(time){
-
+function getTimeScore(time) {
+    switch (time) {
         case "<15 min":
             return 1;
-
         case "15-60 min":
             return 2;
-
         case "1-4 h":
             return 3;
-
         case ">4 h":
             return 4;
-
         default:
             return 1;
     }
-
 }
 
-    function getAmountScore(amount){
-
-    if(!amount) return 1;
-
-    if(amount.includes("Mała"))
+function getAmountScore(amount) {
+    if (!amount) {
         return 1;
+    }
 
-    if(amount.includes("Średnia"))
+    if (amount.includes("Mała")) {
+        return 1;
+    }
+
+    if (amount.includes("Średnia")) {
         return 2;
+    }
 
-    if(amount.includes("Duża"))
+    if (amount.includes("Duża")) {
         return 3;
+    }
 
     return 1;
 }
 
-    function getVentilationFactor(vent){
-
-    switch(vent){
-
+function getVentilationFactor(ventilation) {
+    switch (ventilation) {
         case "Miejscowa wyciągowa":
             return 0.5;
-
         case "Mechaniczna":
             return 0.7;
-
         case "Naturalna":
             return 0.9;
-
         default:
             return 1;
     }
-
 }
 
-    
-function generateAssessment(){
+function getRiskLevel(totalScore) {
+    if (totalScore > 20) {
+        return "🔴 Wysokie";
+    }
+
+    if (totalScore > 10) {
+        return "🟠 Istotne";
+    }
+
+    if (totalScore > 5) {
+        return "🟡 Średnie";
+    }
+
+    return "🟢 Niskie";
+}
+
+function renderList(items, emptyText) {
+    const unique = [...new Set(items.filter(Boolean))];
+
+    if (unique.length === 0) {
+        return `<li>${escapeHtml(emptyText)}</li>`;
+    }
+
+    return unique
+        .map(item => `<li>${escapeHtml(item)}</li>`)
+        .join("");
+}
+
+/* -------------------------
+   GENEROWANIE OCENY
+   ------------------------- */
+
+window.generateAssessment = function() {
+    const result = document.getElementById("assessmentResult");
+
+    if (!result) {
+        return;
+    }
 
     const selectedProducts = [];
 
     document
-    .querySelectorAll(".assessmentProduct")
-    .forEach(item => {
+        .querySelectorAll(".assessmentProduct:checked")
+        .forEach(item => {
+            const index = Number(item.value);
 
-        if(item.checked){
-
-            const product =
-            products.find(
-                p => p.name === item.value
-            );
-
-            if(product){
-                selectedProducts.push(product);
+            if (Number.isInteger(index) && products[index]) {
+                selectedProducts.push(products[index]);
             }
-
-        }
-
-    });
-
-    if(selectedProducts.length === 0){
-
-        alert("Wybierz przynajmniej jeden produkt.");
-        return;
-
-    }
-
-    const scenarioName =
-    document.getElementById("assessmentScenario").value;
-
-    const scenario =
-    scenarios.find(
-        s => s.name === scenarioName
-    );
-if(!scenario){
-    alert("Brak scenariusza.");
-    return;
-}
-    let hazardScore = 0;
-
-    let identifiedRisks = [];
-    
-    let categories = new Set();
-    let manufacturerPPE = new Set();
-    let manufacturerTechnical = new Set();
-    let manufacturerOrganisation = new Set();
-
-    selectedProducts.forEach(product => {
-
-        if(product.ppe){
-
-            product.ppe
-            .split(",")
-            .forEach(item =>
-                manufacturerPPE.add(item.trim())
-            );
-
-        }
-
-        if(product.technical){
-
-            product.technical
-            .split(",")
-            .forEach(item =>
-                manufacturerTechnical.add(item.trim())
-            );
-
-        }
-
-        if(product.organisation){
-
-            product.organisation
-            .split(",")
-            .forEach(item =>
-                manufacturerOrganisation.add(item.trim())
-            );
-
-        }
-
-        const matches =
-        (product.hCodes || "")
-        .match(/H\d{3}/g) || [];
-
-        matches.forEach(code => {
-
-       if(hazardDictionary[code]){
-
-    const band =
-    getHazardBand(code);
-
-    hazardScore =
-    Math.max(
-        hazardScore,
-        getBandScore(band)
-    );
-
-    identifiedRisks.push(
-        hazardDictionary[code].risk
-    );
-categories.add(
-    hazardDictionary[code].category
-);
-}
-
         });
 
+    if (selectedProducts.length === 0) {
+        alert("Wybierz przynajmniej jeden produkt.");
+        return;
+    }
+
+    const jobIndex = Number(
+        document.getElementById("assessmentJob")?.value
+    );
+
+    const scenarioIndex = Number(
+        document.getElementById("assessmentScenario")?.value
+    );
+
+    const job = jobs[jobIndex];
+    const scenario = scenarios[scenarioIndex];
+
+    if (!job) {
+        alert("Wybierz stanowisko.");
+        return;
+    }
+
+    if (!scenario) {
+        alert("Wybierz scenariusz.");
+        return;
+    }
+
+    let hazardScore = 0;
+
+    const identifiedRisks = [];
+    const categories = new Set();
+    const manufacturerPPE = new Set();
+    const manufacturerTechnical = new Set();
+    const manufacturerOrganisation = new Set();
+    const recognizedCodes = [];
+    const unknownCodes = [];
+
+    selectedProducts.forEach(product => {
+        splitRecommendations(product.ppe).forEach(item => {
+            manufacturerPPE.add(item);
+        });
+
+        splitRecommendations(product.technical).forEach(item => {
+            manufacturerTechnical.add(item);
+        });
+
+        splitRecommendations(product.organisation).forEach(item => {
+            manufacturerOrganisation.add(item);
+        });
+
+        const matches = String(product.hCodes || "")
+            .match(/\bH\d{3}[A-Za-z]{0,2}\b/g) || [];
+
+        uniqueValues(matches).forEach(code => {
+            const normalizedCode = code.toUpperCase();
+            const hazard = hazardDictionary[normalizedCode];
+
+            if (!hazard) {
+                unknownCodes.push(normalizedCode);
+                return;
+            }
+
+            recognizedCodes.push(normalizedCode);
+
+            const band = getHazardBand(normalizedCode);
+
+            hazardScore = Math.max(
+                hazardScore,
+                getBandScore(band)
+            );
+
+            identifiedRisks.push(hazard.risk);
+            categories.add(hazard.category);
+        });
     });
 
- const mainProduct =
-selectedProducts[0];
-const stateScore =
-getStateScore(
-    mainProduct.physicalState || "Ciecz"
-);
+    /*
+     * Przy wielu produktach przyjmowany jest najwyższy wynik
+     * wynikający ze stanu skupienia, a nie pierwszy produkt.
+     */
+    const controllingProduct = selectedProducts.reduce(
+        (highest, current) => {
+            const highestScore = getStateScore(
+                highest.physicalState || "Ciecz"
+            );
 
-const methodScore =
-getMethodScore(
-    scenario.method
-);
+            const currentScore = getStateScore(
+                current.physicalState || "Ciecz"
+            );
 
-const timeScore =
-getTimeScore(
-    scenario.time
-);
+            return currentScore > highestScore
+                ? current
+                : highest;
+        }
+    );
 
-const amountScore =
-getAmountScore(
-    scenario.amount
-);
+    const stateScore = getStateScore(
+        controllingProduct.physicalState || "Ciecz"
+    );
 
-const exposureScore =
-(
-    stateScore +
-    methodScore +
-    timeScore +
-    amountScore
-) / 4;
+    const methodScore = getMethodScore(scenario.method);
+    const timeScore = getTimeScore(scenario.time);
+    const amountScore = getAmountScore(scenario.amount);
 
-const controlFactor =
-getVentilationFactor(
-    scenario.vent
-);
+    const exposureScore = (
+        stateScore +
+        methodScore +
+        timeScore +
+        amountScore
+    ) / 4;
 
-const frequencyFactor =
-getFrequencyFactor(
-    scenario.frequency || "Tygodniowo"
-);
+    const controlFactor = getVentilationFactor(
+        scenario.vent
+    );
 
-const totalScore =
-hazardScore *
-exposureScore *
-controlFactor *
-frequencyFactor;
+    const frequencyFactor = getFrequencyFactor(
+        scenario.frequency || "Tygodniowo"
+    );
 
-let riskLevel = "🟢 Niskie";
+    const totalScore =
+        hazardScore *
+        exposureScore *
+        controlFactor *
+        frequencyFactor;
 
-if(totalScore > 5)
-    riskLevel = "🟡 Średnie";
+    const riskLevel = getRiskLevel(totalScore);
 
-if(totalScore > 10)
-    riskLevel = "🟠 Istotne";
+    const riskReasons = [];
+    const riskReducers = [];
 
-if(totalScore > 20)
-    riskLevel = "🔴 Wysokie";
-
-    const uniqueRisks =
-    [...new Set(identifiedRisks)];
-
-let riskReasons = [];
-let riskReducers = [];
-
-if(scenario){
-
-    if(scenario.method === "Natrysk"){
+    if (scenario.method === "Natrysk") {
         riskReasons.push(
-            "Natrysk zwiększa możliwość narażenia inhalacyjnego"
+            "Natrysk zwiększa możliwość narażenia inhalacyjnego."
         );
     }
 
-    if(
-       scenario.amount &&
-       scenario.amount.includes("Duża")
-    ){
+    if (scenario.amount?.includes("Duża")) {
         riskReasons.push(
-            "Stosowana jest duża ilość preparatu"
+            "Stosowana jest duża ilość preparatu."
         );
     }
 
-    if(
-       scenario.time === ">4 h"
-    ){
+    if (scenario.time === ">4 h") {
         riskReasons.push(
-            "Długotrwała ekspozycja pracownika"
+            "Długotrwała ekspozycja pracownika."
         );
     }
 
-    if(
-       scenario.time === "<15 min"
-    ){
+    if (scenario.frequency === "Codziennie") {
+        riskReasons.push(
+            "Produkt jest stosowany codziennie."
+        );
+    }
+
+    if (
+        ["Gaz", "Aerozol", "Pył"].includes(
+            controllingProduct.physicalState
+        )
+    ) {
+        riskReasons.push(
+            `Stan skupienia „${controllingProduct.physicalState}” ` +
+            "zwiększa możliwość narażenia inhalacyjnego."
+        );
+    }
+
+    if (scenario.time === "<15 min") {
         riskReducers.push(
-            "Krótki czas ekspozycji"
+            "Krótki czas pojedynczej ekspozycji."
         );
     }
 
-    if(
-       scenario.amount &&
-       scenario.amount.includes("Mała")
-    ){
+    if (scenario.amount?.includes("Mała")) {
         riskReducers.push(
-            "Niewielka ilość preparatu"
+            "Niewielka ilość stosowanego preparatu."
         );
     }
 
-    if(
-       scenario.vent === "Mechaniczna"
-    ){
+    if (scenario.vent === "Mechaniczna") {
         riskReducers.push(
-            "Zapewniona wentylacja mechaniczna"
+            "Zapewniona wentylacja mechaniczna."
         );
     }
 
-    if(
-       scenario.vent === "Miejscowa wyciągowa"
-    ){
+    if (scenario.vent === "Miejscowa wyciągowa") {
         riskReducers.push(
-            "Zastosowano wentylację miejscową wyciągową"
+            "Zastosowano wentylację miejscową wyciągową."
         );
     }
 
+    if (scenario.method === "Układ zamknięty") {
+        riskReducers.push(
+            "Proces odbywa się w układzie zamkniętym."
+        );
+    }
+
+    const exposureRoutes = [];
+
+    if (document.getElementById("expSkin")?.checked) {
+        exposureRoutes.push("skóra");
+    }
+
+    if (document.getElementById("expEyes")?.checked) {
+        exposureRoutes.push("oczy");
+    }
+
+    if (document.getElementById("expInhalation")?.checked) {
+        exposureRoutes.push("inhalacja");
+    }
+
+    if (document.getElementById("expIngestion")?.checked) {
+        exposureRoutes.push("połknięcie");
+    }
+
+    result.innerHTML = `
+        <div class="result">
+            <h3>Ocena ryzyka chemicznego</h3>
+
+            <b>Stanowisko:</b><br>
+            ${escapeHtml(job.name)}
+            <br><br>
+
+            <b>Scenariusz:</b><br>
+            ${escapeHtml(scenario.name)}
+            <br><br>
+
+            <b>Częstotliwość:</b><br>
+            ${escapeHtml(scenario.frequency)}
+            <br><br>
+
+            <b>Produkty:</b><br>
+            ${selectedProducts
+                .map(product => escapeHtml(product.name))
+                .join(", ")}
+            <br><br>
+
+            <b>Drogi narażenia:</b><br>
+            ${exposureRoutes.length
+                ? exposureRoutes.map(escapeHtml).join(", ")
+                : "Nie wskazano"}
+            <br><br>
+
+            <b>Zwroty H uwzględnione w ocenie:</b><br>
+            ${uniqueValues(recognizedCodes)
+                .map(escapeHtml)
+                .join(", ") || "Brak rozpoznanych kodów"}
+            <br><br>
+
+            ${unknownCodes.length ? `
+                <div class="status-yellow">
+                    Nierozpoznane kody wymagające uzupełnienia
+                    słownika:
+                    ${uniqueValues(unknownCodes)
+                        .map(escapeHtml)
+                        .join(", ")}
+                </div>
+                <br>
+            ` : ""}
+
+            <b>Kategorie zagrożeń:</b>
+            <ul>
+                ${renderList(
+                    Array.from(categories),
+                    "Brak rozpoznanych kategorii."
+                )}
+            </ul>
+
+            <b>Zidentyfikowane zagrożenia:</b>
+            <ul>
+                ${renderList(
+                    identifiedRisks,
+                    "Brak rozpoznanych zagrożeń."
+                )}
+            </ul>
+
+            <b>Punkty zagrożenia:</b>
+            ${hazardScore}
+            <br>
+
+            <b>Punkty ekspozycji:</b>
+            ${exposureScore.toFixed(2)}
+            <br>
+
+            <b>Stan determinujący ekspozycję:</b>
+            ${escapeHtml(
+                controllingProduct.physicalState || "Nie określono"
+            )}
+            (${escapeHtml(controllingProduct.name)})
+            <br>
+
+            <b>Współczynnik wentylacji:</b>
+            ${controlFactor}
+            <br>
+
+            <b>Współczynnik częstotliwości:</b>
+            ${frequencyFactor}
+            <br>
+
+            <b>Łączna punktacja:</b>
+            ${totalScore.toFixed(2)}
+            <br><br>
+
+            <b>Poziom ryzyka:</b>
+            <h2>${riskLevel}</h2>
+
+            <b>Czynniki zwiększające ryzyko:</b>
+            <ul>
+                ${renderList(
+                    riskReasons,
+                    "Nie wskazano dodatkowych czynników zwiększających."
+                )}
+            </ul>
+
+            <b>Czynniki ograniczające ryzyko:</b>
+            <ul>
+                ${renderList(
+                    riskReducers,
+                    "Nie wskazano czynników ograniczających."
+                )}
+            </ul>
+
+            <b>ŚOI według KCh:</b>
+            <ul>
+                ${renderList(
+                    Array.from(manufacturerPPE),
+                    "Brak danych w KCh."
+                )}
+            </ul>
+
+            <b>Środki techniczne według KCh:</b>
+            <ul>
+                ${renderList(
+                    Array.from(manufacturerTechnical),
+                    "Brak danych w KCh."
+                )}
+            </ul>
+
+            <b>Środki organizacyjne:</b>
+            <ul>
+                ${renderList(
+                    Array.from(manufacturerOrganisation),
+                    "Brak wprowadzonych danych."
+                )}
+            </ul>
+
+            <div class="status-yellow">
+                Wynik automatyczny wymaga zatwierdzenia przez osobę
+                wykonującą ocenę. Należy zweryfikować treść KCh,
+                warunki rzeczywistego stosowania oraz skuteczność
+                środków ochronnych.
+            </div>
+        </div>
+    `;
+};
+
+/* -------------------------
+   URUCHOMIENIE APLIKACJI
+   ------------------------- */
+
+function initializeApplication() {
+    ensurePdfControls();
+    renderProducts();
+    renderJobs();
+    renderScenarios();
+    updateDashboard();
+    populateAssessmentData();
 }
-    
-    document.getElementById(
-    "assessmentResult"
-).innerHTML = `
 
-<div class="result">
-
-    <h3>Ocena ryzyka chemicznego</h3>
-
-    <b>Stanowisko:</b><br>
-    ${document.getElementById("assessmentJob").value}
-
-    <br><br>
-
-    <b>Scenariusz:</b><br>
-    ${scenarioName}
-
-<b>Częstotliwość:</b><br>
-${scenario.frequency}
-
-    <br><br>
-
-    <b>Produkty:</b><br>
-    ${selectedProducts.map(
-        p => p.name
-    ).join(", ")}
-
-<br><br>
-
-<b>Zwroty H uwzględnione w ocenie:</b><br>
-
-${selectedProducts
-.map(p => p.hCodes)
-.join(", ")}
-
-    <br><br>
-
-    <b>Zagrożenia:</b>
-<br><br>
-
-<b>Kategorie zagrożeń:</b>
-
-<ul>
-${Array.from(categories)
-.map(c => `<li>${c}</li>`)
-.join("")}
-</ul>
-
-    <ul>
-    ${uniqueRisks.map(
-        r => `<li>${r}</li>`
-    ).join("")}
-    </ul>
-
-    <b>Punkty zagrożenia:</b>
-    ${hazardScore}
-
-    <br>
-
-    <b>Punkty ekspozycji:</b>
-    ${exposureScore}
-<br>
-
-<b>Stan skupienia:</b>
-${mainProduct.physicalState || "Nie określono"}
-
-<br>
-
-<b>Współczynnik wentylacji:</b>
-${controlFactor}
-
-<br>
-
-<b>Współczynnik częstotliwości:</b>
-${frequencyFactor}
-
-    <br>
-
-    <b>Łączna punktacja:</b>
-    ${totalScore}
-
-    <br><br>
-
-    <b>Poziom ryzyka:</b>
-
-    <h2>${riskLevel}</h2>
-
-<br>
-
-<b>Uzasadnienie oceny:</b>
-
-<br><br>
-
-<b>Czynniki zwiększające ryzyko:</b>
-
-<ul>
-${riskReasons
-.map(r => `<li>${r}</li>`)
-.join("")}
-</ul>
-
-<b>Czynniki ograniczające ryzyko:</b>
-
-<ul>
-${riskReducers
-.map(r => `<li>${r}</li>`)
-.join("")}
-</ul>
-
-    <b>ŚOI wg KCh:</b>
-
-    <ul>
-   ${manufacturerPPE.size
-? Array.from(manufacturerPPE)
-        .map(r => `<li>${r}</li>`)
-        .join(""): "<li>Brak danych w KCh</li>"
-}
-    </ul>
-
-    <b>Środki techniczne wg KCh:</b>
-
-    <ul>
-    ${Array.from(manufacturerTechnical)
-        .map(r => `<li>${r}</li>`)
-        .join("")}
-    </ul>
-
-    <b>Środki organizacyjne wg KCh:</b>
-
-    <ul>
-    ${Array.from(manufacturerOrganisation)
-        .map(r => `<li>${r}</li>`)
-        .join("")}
-    </ul>
-
-</div>
-`;
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeApplication,
+        { once: true }
+    );
+} else {
+    initializeApplication();
 }
 </script>
 </body>
