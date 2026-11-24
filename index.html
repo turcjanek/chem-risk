@@ -125,9 +125,7 @@ table th{
     margin-top:10px;
 }
 
-</style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.js"></script>
-    
+</style>    
 </head>
 <body>
 
@@ -221,14 +219,7 @@ type="file"
 id="productPdf"
 accept=".pdf"
 onchange="showProductPdf()">
-<button
-class="action"
-type="button"
-onclick="analyzePdf()">
 
-Analizuj KCh
-
-</button>
 <div id="pdfInfo"></div>
 
 <label>Zwroty H</label>
@@ -289,6 +280,7 @@ Dodaj produkt
 <th>Data KCh</th>
 <th>Zwroty H</th>
 <th>Status</th>
+<th>Stan</th>
 <th>Usuń</th>
 </tr>
 </thead>
@@ -581,17 +573,7 @@ return '<span class="status-yellow">🟡 Przegląd</span>';
 
 return '<span class="status-red">🔴 Weryfikacja</span>';
 }
-async function analyzePdf(){
 
-    const fileInput =
-    document.getElementById("productPdf");
-
-    if(fileInput.files.length === 0){
-
-        alert("Najpierw wybierz PDF.");
-
-        return;
-    }
 
     const file =
     fileInput.files[0];
@@ -734,6 +716,7 @@ html+=`
 <tr>
 <td>${p.name}</td>
 <td>${p.manufacturer}</td>
+<td>${p.physicalState || ""}</td>
 <td>${p.version || ""}</td>
 <td>${p.date}</td>
 <td>${p.hCodes || ""}</td>
@@ -1187,7 +1170,8 @@ if(!scenario){
     let hazardScore = 0;
 
     let identifiedRisks = [];
-
+    
+    let categories = new Set();
     let manufacturerPPE = new Set();
     let manufacturerTechnical = new Set();
     let manufacturerOrganisation = new Set();
@@ -1230,18 +1214,24 @@ if(!scenario){
 
         matches.forEach(code => {
 
-            if(hazardDictionary[code]){
+       if(hazardDictionary[code]){
 
-                const band =
-getHazardBand(code);
+    const band =
+    getHazardBand(code);
 
-hazardScore =
-Math.max(
-    hazardScore,
-    getBandScore(band)
+    hazardScore =
+    Math.max(
+        hazardScore,
+        getBandScore(band)
+    );
+
+    identifiedRisks.push(
+        hazardDictionary[code].risk
+    );
+categories.add(
+    hazardDictionary[code].category
 );
-
-            }
+}
 
         });
 
@@ -1249,7 +1239,6 @@ Math.max(
 
  const mainProduct =
 selectedProducts[0];
-console.log(mainProduct);
 const stateScore =
 getStateScore(
     mainProduct.physicalState || "Ciecz"
@@ -1296,13 +1285,13 @@ frequencyFactor;
 
 let riskLevel = "🟢 Niskie";
 
-if(totalScore > 3)
+if(totalScore > 5)
     riskLevel = "🟡 Średnie";
 
-if(totalScore > 8)
+if(totalScore > 10)
     riskLevel = "🟠 Istotne";
 
-if(totalScore > 15)
+if(totalScore > 20)
     riskLevel = "🔴 Wysokie";
 
     const uniqueRisks =
@@ -1408,6 +1397,15 @@ ${selectedProducts
     <br><br>
 
     <b>Zagrożenia:</b>
+<br><br>
+
+<b>Kategorie zagrożeń:</b>
+
+<ul>
+${Array.from(categories)
+.map(c => `<li>${c}</li>`)
+.join("")}
+</ul>
 
     <ul>
     ${uniqueRisks.map(
