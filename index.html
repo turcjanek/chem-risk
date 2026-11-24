@@ -393,7 +393,15 @@ Dodaj stanowisko
             <option>Średnia (1-10 l/kg)</option>
             <option>Duża (&gt;10 l/kg)</option>
         </select>
+<label>Częstotliwość stosowania</label>
 
+<select id="scenarioFrequency">
+<option>Sporadycznie</option>
+<option>Miesięcznie</option>
+<option>Tygodniowo</option>
+<option>Codziennie</option>
+</select>
+        
         <button class="action" onclick="addScenario()">
             Dodaj scenariusz
         </button>
@@ -408,12 +416,13 @@ Dodaj stanowisko
 
             <thead>
                 <tr>
-                    <th>Nazwa</th>
-                    <th>Metoda</th>
-                    <th>Czas</th>
-                    <th>Wentylacja</th>
-                    <th>Ilość</th>
-                    <th>Usuń</th>
+                  <th>Nazwa</th>
+<th>Metoda</th>
+<th>Czas</th>
+<th>Wentylacja</th>
+<th>Ilość</th>
+<th>Częstotliwość</th>
+<th>Usuń</th>
                 </tr>
             </thead>
 
@@ -845,8 +854,11 @@ vent:
 document.getElementById("scenarioVent").value,
 
 amount:
-document.getElementById("scenarioAmount").value
-    
+document.getElementById("scenarioAmount").value,
+
+frequency:
+document.getElementById("scenarioFrequency").value
+
 };
 
 if(scenario.name==="") return;
@@ -876,6 +888,7 @@ html+=`
 <td>${s.time}</td>
 <td>${s.vent}</td>
 <td>${s.amount}</td>
+<td>${s.frequency}</td>
 <td>
 <button onclick="deleteScenario(${index})">
 Usuń
@@ -1002,7 +1015,26 @@ D : ["H300","H310","H330","H351","H360"],
 E : ["H334","H340","H350"]
 
 };
-    
+    function getFrequencyFactor(freq){
+
+    switch(freq){
+
+        case "Sporadycznie":
+            return 0.5;
+
+        case "Miesięcznie":
+            return 0.75;
+
+        case "Tygodniowo":
+            return 1;
+
+        case "Codziennie":
+            return 1.25;
+
+        default:
+            return 1;
+    }
+}
 function generateAssessment(){
 
     const selectedProducts = [];
@@ -1161,6 +1193,10 @@ Math.max(
     const uniqueRisks =
     [...new Set(identifiedRisks)];
 
+    const frequencyFactor =
+getFrequencyFactor(
+    scenario.frequency
+);
 let riskReasons = [];
 let riskReducers = [];
 
@@ -1239,6 +1275,9 @@ if(scenario){
 
     <b>Scenariusz:</b><br>
     ${scenarioName}
+
+<b>Częstotliwość:</b><br>
+${scenario.frequency}
 
     <br><br>
 
