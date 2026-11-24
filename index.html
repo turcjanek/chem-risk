@@ -1084,6 +1084,69 @@ Math.max(
     const uniqueRisks =
     [...new Set(identifiedRisks)];
 
+let riskReasons = [];
+let riskReducers = [];
+
+if(scenario){
+
+    if(scenario.method === "Natrysk"){
+        riskReasons.push(
+            "Natrysk zwiększa możliwość narażenia inhalacyjnego"
+        );
+    }
+
+    if(
+       scenario.amount &&
+       scenario.amount.includes("Duża")
+    ){
+        riskReasons.push(
+            "Stosowana jest duża ilość preparatu"
+        );
+    }
+
+    if(
+       scenario.time === ">4 h"
+    ){
+        riskReasons.push(
+            "Długotrwała ekspozycja pracownika"
+        );
+    }
+
+    if(
+       scenario.time === "<15 min"
+    ){
+        riskReducers.push(
+            "Krótki czas ekspozycji"
+        );
+    }
+
+    if(
+       scenario.amount &&
+       scenario.amount.includes("Mała")
+    ){
+        riskReducers.push(
+            "Niewielka ilość preparatu"
+        );
+    }
+
+    if(
+       scenario.vent === "Mechaniczna"
+    ){
+        riskReducers.push(
+            "Zapewniona wentylacja mechaniczna"
+        );
+    }
+
+    if(
+       scenario.vent === "Miejscowa wyciągowa"
+    ){
+        riskReducers.push(
+            "Zastosowano wentylację miejscową wyciągową"
+        );
+    }
+
+}
+    
     document.getElementById(
     "assessmentResult"
 ).innerHTML = `
@@ -1106,6 +1169,14 @@ Math.max(
     ${selectedProducts.map(
         p => p.name
     ).join(", ")}
+
+<br><br>
+
+<b>Zwroty H uwzględnione w ocenie:</b><br>
+
+${selectedProducts
+.map(p => p.hCodes)
+.join(", ")}
 
     <br><br>
 
@@ -1135,6 +1206,28 @@ Math.max(
     <b>Poziom ryzyka:</b>
 
     <h2>${riskLevel}</h2>
+
+<br>
+
+<b>Uzasadnienie oceny:</b>
+
+<br><br>
+
+<b>Czynniki zwiększające ryzyko:</b>
+
+<ul>
+${riskReasons
+.map(r => `<li>${r}</li>`)
+.join("")}
+</ul>
+
+<b>Czynniki ograniczające ryzyko:</b>
+
+<ul>
+${riskReducers
+.map(r => `<li>${r}</li>`)
+.join("")}
+</ul>
 
     <b>ŚOI wg KCh:</b>
 
