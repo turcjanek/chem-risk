@@ -1247,7 +1247,7 @@ Math.max(
 
     });
 
-   const mainProduct =
+ const mainProduct =
 selectedProducts[0];
 
 const stateScore =
@@ -1277,7 +1277,8 @@ const exposureScore =
     timeScore +
     amountScore
 ) / 4;
-    const controlFactor =
+
+const controlFactor =
 getVentilationFactor(
     scenario.vent
 );
@@ -1293,7 +1294,7 @@ exposureScore *
 controlFactor *
 frequencyFactor;
 
-    let riskLevel = "🟢 Niskie";
+let riskLevel = "🟢 Niskie";
 
 if(totalScore > 3)
     riskLevel = "🟡 Średnie";
