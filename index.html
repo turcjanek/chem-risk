@@ -337,92 +337,82 @@ Dodaj stanowisko
 
 <div id="scenarios" class="page">
 
-<div class="card">
+    <div class="card">
 
-<h2>Dodaj scenariusz</h2>
+        <h2>Dodaj scenariusz</h2>
 
-<label>Nazwa scenariusza</label>
-<input id="scenarioName">
+        <label>Nazwa scenariusza</label>
+        <input id="scenarioName">
 
-<label>Sposób użycia</label>
+        <label>Sposób użycia</label>
+        <select id="scenarioMethod">
+            <option>Natrysk</option>
+            <option>Przelewanie</option>
+            <option>Mycie</option>
+            <option>Dozowanie</option>
+            <option>Układ zamknięty</option>
+        </select>
 
-<select id="scenarioMethod">
-<option>Natrysk</option>
-<option>Przelewanie</option>
-<option>Mycie</option>
-<option>Dozowanie</option>
-<option>Układ zamknięty</option>
-</select>
+        <label>Czas ekspozycji</label>
+        <select id="scenarioTime">
+            <option>&lt;15 min</option>
+            <option>15-60 min</option>
+            <option>1-4 h</option>
+            <option>&gt;4 h</option>
+        </select>
 
-<label>Czas ekspozycji</label>
+        <label>Wentylacja</label>
+        <select id="scenarioVent">
+            <option>Naturalna</option>
+            <option>Mechaniczna</option>
+            <option>Miejscowa wyciągowa</option>
+        </select>
 
-<select id="scenarioTime">
-<option>&lt;15 min</option>
-<option>15-60 min</option>
-<option>1-4 h</option>
-<option>&gt;4 h</option>
-</select>
+        <label>Ilość preparatu</label>
+        <select id="scenarioAmount">
+            <option>Mała (&lt;1 l/kg)</option>
+            <option>Średnia (1-10 l/kg)</option>
+            <option>Duża (&gt;10 l/kg)</option>
+        </select>
 
-<label>Wentylacja</label>
+        <button class="action" onclick="addScenario()">
+            Dodaj scenariusz
+        </button>
 
-<select id="scenarioVent">
-<option>Naturalna</option>
-<option>Mechaniczna</option>
-<option>Miejscowa wyciągowa</option>
-</select>
+    </div>
 
-<label>Ilość preparatu</label>
+    <div class="card">
 
-<select id="scenarioAmount">
-<option>Mała (<1 l/kg)</option>
-<option>Średnia (1-10 l/kg)</option>
-<option>Duża (>10 l/kg)</option>
-</select>
+        <h2>Wynik oceny</h2>
 
-<button class="action" onclick="addScenario()">
-Dodaj scenariusz
-</button>
+        <div id="assessmentResult">
+            Brak wygenerowanej oceny.
+        </div>
 
-</div>
+    </div>
 
-<div class="card">
+    <div class="card">
 
-<h2>Wynik oceny</h2>
+        <h2>Scenariusze</h2>
 
-<div id="assessmentResult">
+        <table>
 
-Brak wygenerowanej oceny.
+            <thead>
+                <tr>
+                    <th>Nazwa</th>
+                    <th>Metoda</th>
+                    <th>Czas</th>
+                    <th>Wentylacja</th>
+                    <th>Ilość</th>
+                    <th>Usuń</th>
+                </tr>
+            </thead>
 
-</div>
+            <tbody id="scenarioTable"></tbody>
 
-</div>
+        </table>
 
-</div>
-    
-<div class="card">
-
-<h2>Scenariusze</h2>
-
-<table>
-
-<thead>
-
-<tr>
-<th>Nazwa</th>
-<th>Metoda</th>
-<th>Czas</th>
-<th>Wentylacja</th>
-<th>Ilość</th>
-<th>Usuń</th>
-</tr>
-
-</thead>
-
-<tbody id="scenarioTable"></tbody>
-
-</table>
-
-</div>
+    </div>
 
 </div>
 
@@ -868,11 +858,6 @@ function populateAssessmentData(){
     productDiv.innerHTML = productHtml;
 }
 
-document.getElementById(
-"productSelection"
-).innerHTML=productHtml;
-
-}
 const hazardDictionary = {
 
 "H220":{
@@ -1365,8 +1350,8 @@ if(!scenario){
     </ul>
 
 </div>
+`;
+}
 </script>
 </body>
 </html>
-`;
-}
