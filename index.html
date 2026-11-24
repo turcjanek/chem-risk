@@ -574,30 +574,7 @@ return '<span class="status-yellow">🟡 Przegląd</span>';
 return '<span class="status-red">🔴 Weryfikacja</span>';
 }
 
-    const hCodes =
-    [...new Set(
-        fullText.match(/H\d{3}/g) || []
-    )];
-
-    const euhCodes =
-    [...new Set(
-        fullText.match(/EUH\d{3}/g) || []
-    )];
-
-    document.getElementById(
-        "hCodes"
-    ).value = hCodes.join(", ");
-
-    document.getElementById(
-        "euhCodes"
-    ).value = euhCodes.join(", ");
-
-    alert(
-        `Znaleziono ${hCodes.length} zwrotów H i ${euhCodes.length} zwrotów EUH`
-    );
-
-}
-function addProduct(){
+   function addProduct(){
 
 const file =
 document.getElementById("productPdf");
@@ -1239,7 +1216,7 @@ getVentilationFactor(
 
 const frequencyFactor =
 getFrequencyFactor(
-    scenario.frequency
+    scenario.frequency || "Tygodniowo"
 );
 
 const totalScore =
@@ -1388,7 +1365,7 @@ ${Array.from(categories)
 <br>
 
 <b>Stan skupienia:</b>
-${mainProduct.physicalState}
+${mainProduct.physicalState || "Nie określono"}
 
 <br>
 
@@ -1436,9 +1413,11 @@ ${riskReducers
     <b>ŚOI wg KCh:</b>
 
     <ul>
-    ${Array.from(manufacturerPPE)
+   ${manufacturerPPE.size
+? Array.from(manufacturerPPE)
         .map(r => `<li>${r}</li>`)
-        .join("")}
+        .join(""): "<li>Brak danych w KCh</li>"
+}
     </ul>
 
     <b>Środki techniczne wg KCh:</b>
