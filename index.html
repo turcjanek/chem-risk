@@ -196,6 +196,16 @@ placeholder="np. WD‑40 Specialist Degreaser">
 <input id="manufacturer"
 placeholder="np. WD‑40 Company">
 
+<label>Stan skupienia</label>
+
+<select id="physicalState">
+    <option>Ciecz</option>
+    <option>Aerozol</option>
+    <option>Gaz</option>
+    <option>Ciało stałe</option>
+    <option>Pył</option>
+</select>
+
 <label>Numer wersji KCh</label>
 <input id="kchVersion"
 placeholder="np. 3.0">
@@ -381,17 +391,7 @@ Dodaj stanowisko
 
     </div>
 
-    <div class="card">
-
-        <h2>Wynik oceny</h2>
-
-        <div id="assessmentResult">
-            Brak wygenerowanej oceny.
-        </div>
-
-    </div>
-
-    <div class="card">
+        <div class="card">
 
         <h2>Scenariusze</h2>
 
@@ -449,6 +449,19 @@ Generuj ocenę
 </button>
 
 </div>
+
+<div class="card">
+
+<h2>Wynik oceny</h2>
+
+<div id="assessmentResult">
+Brak wygenerowanej oceny.
+</div>
+
+</div>
+
+</div>
+
 <script>
 
 let products = [];
@@ -535,6 +548,9 @@ document.getElementById("productName").value,
 manufacturer:
 document.getElementById("manufacturer").value,
 
+physicalState:
+document.getElementById("physicalState").value,
+
 version:
 document.getElementById("kchVersion").value,
 
@@ -590,6 +606,7 @@ document.getElementById("ppeData").value = "";
 document.getElementById("technicalData").value = "";
 document.getElementById("organisationData").value = "";
 document.getElementById("productPdf").value = "";
+document.getElementById("physicalState").selectedIndex = 0;
 }
 
 function renderProducts(){
