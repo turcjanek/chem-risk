@@ -20,22 +20,39 @@
 <div><label for="kchVersion">Wersja KCh</label><input id="kchVersion"></div><div><label for="kchDate">Data aktualizacji KCh</label><input type="date" id="kchDate"></div>
 <div><label for="productPdf">KCh w PDF</label><input type="file" id="productPdf" accept="application/pdf,.pdf"></div>
 <div class="full">
-<div style="display:flex;flex-wrap:wrap;gap:8px">
-<button type="button" class="primary" id="analyseWithCopilotButton">Analizuj z Copilot</button>
-<button type="button" id="copyCopilotPromptButton">Kopiuj sam prompt</button>
-</div>
 <div id="pdfInfo" aria-live="polite"></div>
+<div class="card" style="background:#f7f9fc;border:1px solid #d6dee8;box-shadow:none">
+<h3 style="margin-top:0">Odczyt KCh z pomocą Copilot</h3>
+<p><b>ChemRisk nie przesyła pliku do Copilot automatycznie.</b> Wykonaj kolejno poniższe czynności:</p>
+<ol style="line-height:1.7">
+<li>W osobnej karcie otwórz Microsoft 365 Copilot.</li>
+<li>W Copilot dodaj jako załącznik tę samą kartę charakterystyki PDF.</li>
+<li>Poniżej kliknij <b>Kopiuj prompt</b>, a następnie wklej prompt do Copilot klawiszami <b>Ctrl+V</b>.</li>
+<li>Wyślij wiadomość i poczekaj na odpowiedź w formacie JSON.</li>
+<li>Skopiuj cały JSON z odpowiedzi Copilot.</li>
+<li>Wklej JSON w pole <b>Wynik JSON z Copilot</b> i kliknij <b>Wczytaj dane do formularza</b>.</li>
+<li>Sprawdź dane z oryginalną KCh. Każde pole możesz uzupełnić lub poprawić ręcznie.</li>
+</ol>
+<label for="copilotPromptText">Prompt do skopiowania</label>
+<textarea id="copilotPromptText" rows="12" readonly></textarea>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+<button type="button" class="primary" id="copyCopilotPromptButton">Kopiuj prompt</button>
+<a href="https://m365.cloud.microsoft/chat" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:10px 14px;border-radius:8px;background:#dfe7f1;color:#172033;font-weight:650;text-decoration:none">Otwórz Copilot w nowej karcie</a>
 </div>
-<div class="full"><details><summary><b>Import wyniku z Copilot</b></summary>
-<p>Po analizie skopiuj odpowiedź JSON z Copilot, wklej poniżej i kliknij „Wczytaj dane”. Wszystkie pola nadal można wpisać lub poprawić ręcznie.</p>
-<label for="copilotJson">JSON zwrócony przez Copilot</label>
-<textarea id="copilotJson" rows="12" placeholder='Wklej JSON, np. {"productName":"...","hCodes":["H315"]}'></textarea>
-<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button type="button" class="primary" id="applyCopilotResult">Wczytaj dane z Copilot</button><button type="button" id="clearCopilotJson">Wyczyść JSON</button></div>
+<div id="copilotPromptInfo" aria-live="polite"></div>
+<hr style="border:0;border-top:1px solid #d6dee8;margin:18px 0">
+<label for="copilotJson">Wynik JSON z Copilot</label>
+<textarea id="copilotJson" rows="14" placeholder='Wklej tutaj całą odpowiedź JSON z Copilot'></textarea>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+<button type="button" class="primary" id="applyCopilotResult">Wczytaj dane do formularza</button>
+<button type="button" id="clearCopilotJson">Wyczyść JSON</button>
+</div>
 <div id="copilotImportInfo" aria-live="polite"></div>
-</details></div>
+</div>
+</div>
 <div><label for="hCodes">Zwroty H</label><textarea id="hCodes" rows="3"></textarea></div><div><label for="euhCodes">Zwroty EUH</label><textarea id="euhCodes" rows="3"></textarea></div>
 <div><label for="ppeData">ŚOI wg KCh</label><textarea id="ppeData" rows="5"></textarea></div><div><label for="technicalData">Środki techniczne wg KCh</label><textarea id="technicalData" rows="5"></textarea></div>
-<div class="full"><label for="organisationData">Środki organizacyjne</label><textarea id="organisationData" rows="3"></textarea></div>
+<div class="full"><label for="organisationData">Zalecenia organizacyjne i higieniczne z KCh (sekcja 7, pomocniczo 8)</label><textarea id="organisationData" rows="4" placeholder="Możesz wczytać z Copilot albo wpisać ręcznie. To zalecenia producenta, nie potwierdzenie wdrożenia w zakładzie."></textarea></div>
 <div class="full"><button type="button" class="primary" id="addProduct">Dodaj produkt</button></div></div></div>
 <div class="card"><h2>Produkty</h2><div class="table-wrap"><table><thead><tr><th>Produkt</th><th>Producent</th><th>Stan</th><th>Wersja</th><th>Data KCh</th><th>H/EUH</th><th>Akcja</th></tr></thead><tbody id="productTable"></tbody></table></div></div></section>
 <section id="jobs" class="page"><div class="card"><h2>Dodaj stanowisko</h2><div class="grid"><div><label for="jobName">Nazwa</label><input id="jobName"></div><div><label for="jobLocation">Lokalizacja</label><input id="jobLocation"></div><div><label for="jobWorkers">Liczba pracowników</label><input type="number" min="0" id="jobWorkers"></div><div><label for="jobDescription">Opis</label><textarea id="jobDescription"></textarea></div><div class="full"><button class="primary" id="addJob" type="button">Dodaj stanowisko</button></div></div></div><div class="card"><div class="table-wrap"><table><thead><tr><th>Nazwa</th><th>Lokalizacja</th><th>Pracownicy</th><th>Akcja</th></tr></thead><tbody id="jobTable"></tbody></table></div></div></section>
@@ -59,6 +76,25 @@
 <div><label for="scenarioSkinTime">Czas pozostawania na skórze</label><select id="scenarioSkinTime"><option>Usuwane natychmiast</option><option>Do 15 min</option><option>15-60 min</option><option>Powyżej 60 min</option></select></div>
 <div><label for="scenarioIgnition">Źródła zapłonu</label><select id="scenarioIgnition"><option>Brak / wyeliminowane</option><option>Możliwe</option><option>Obecne w pobliżu procesu</option></select></div>
 <div><label for="scenarioEmergency">Możliwość awarii lub rozlania</label><select id="scenarioEmergency"><option>Mało prawdopodobna</option><option>Możliwa</option><option>Istotna / częste rozlania</option></select></div>
+<div class="full"><h3>Środki organizacyjne faktycznie wdrożone</h3><p class="notice warn">Zaznacz tylko działania potwierdzone na stanowisku. Zalecenia z KCh nie oznaczają automatycznie, że środek został wdrożony.</p><div class="check-list" id="orgMeasuresChecklist">
+<label><input id="orgAuthorised" type="checkbox"> Dostęp ograniczony do osób upoważnionych</label>
+<label><input id="orgTraining" type="checkbox"> Pracownicy przeszkoleni z KCh i instrukcji</label>
+<label><input id="orgInstruction" type="checkbox"> Dostępna aktualna instrukcja wykonywania czynności</label>
+<label><input id="orgSdsAvailable" type="checkbox"> KCh dostępna dla pracowników</label>
+<label><input id="orgPeopleLimited" type="checkbox"> Ograniczono liczbę osób w strefie pracy</label>
+<label><input id="orgNoFood" type="checkbox"> Obowiązuje zakaz jedzenia, picia i palenia</label>
+<label><input id="orgHandWash" type="checkbox"> Zapewniono mycie rąk po pracy</label>
+<label><input id="orgGloveChange" type="checkbox"> Określono zasady wymiany zabrudzonych rękawic</label>
+<label><input id="orgSpillProcedure" type="checkbox"> Istnieje procedura usuwania rozlania</label>
+<label><input id="orgSpillKit" type="checkbox"> Dostępny jest zestaw sorpcyjny</label>
+<label><input id="orgContainersClosed" type="checkbox"> Pojemniki są zamykane po użyciu</label>
+<label><input id="orgWaste" type="checkbox"> Odpady trafiają do oznakowanego pojemnika</label>
+<label><input id="orgVentInspection" type="checkbox"> Przegląd lub pomiar skuteczności wentylacji jest aktualny</label>
+<label><input id="orgIgnitionControlled" type="checkbox"> Źródła zapłonu zostały usunięte lub są kontrolowane</label>
+<label><input id="orgStorage" type="checkbox"> Określono zasady bezpiecznego przechowywania</label>
+<label><input id="orgEmergency" type="checkbox"> Określono postępowanie awaryjne</label>
+</div></div>
+<div class="full"><label for="scenarioAdditionalOrg">Inne wdrożone środki organizacyjne</label><textarea id="scenarioAdditionalOrg" rows="3" placeholder="Np. czynność wykonuje wyłącznie wyznaczony pracownik po zatrzymaniu maszyny."></textarea></div>
 <div class="full"><button class="primary" id="addScenario" type="button">Dodaj scenariusz</button></div></div></div>
 <div class="card"><h2>Zapisane scenariusze</h2><div class="table-wrap"><table><thead><tr><th>Nazwa</th><th>Czynność</th><th>Proces</th><th>Ilość</th><th>Ekspozycja/zmianę</th><th>Wentylacja</th><th>Drogi</th><th>Akcja</th></tr></thead><tbody id="scenarioTable"></tbody></table></div></div></section>
 <section id="assessment" class="page"><div class="card"><h2>Ocena</h2><div class="grid"><div><label for="assessmentJob">Stanowisko</label><select id="assessmentJob"></select></div><div><label for="assessmentScenario">Scenariusz</label><select id="assessmentScenario"></select></div><div class="full"><label>Produkty</label><div id="productSelection" class="check-list"></div></div><div class="full"><button type="button" class="primary" id="generateAssessment">Generuj ocenę</button></div></div><div id="assessmentResult" aria-live="polite"></div></div></section>
@@ -77,12 +113,13 @@ Zasady:
 1. Nazwę produktu i producenta pobierz z sekcji 1.
 2. Klasyfikację produktu oraz zwroty H i EUH pobierz przede wszystkim z sekcji 2.1 i 2.2.
 3. Nie przypisuj produktowi wszystkich zwrotów H składników wymienionych w sekcji 3.
-4. Środki ochrony indywidualnej i techniczne środki kontroli pobierz z sekcji 8.
-5. Stan skupienia pobierz z sekcji 9.
-6. Datę aktualizacji i wersję KCh pobierz z nagłówka albo sekcji 16.
-7. Nie zgaduj. Brak danych oznacz jako null lub pustą tablicę.
-8. W warnings podaj niepewności i elementy wymagające ręcznej weryfikacji.
-9. Dla każdej grupy danych podaj stronę źródłową, jeżeli można ją ustalić.
+4. Zalecenia organizacyjne, higieniczne, bezpieczne postępowanie i magazynowanie pobierz z sekcji 7, pomocniczo z sekcji 8. Nie twórz informacji o organizacji zakładu, których nie ma w KCh.
+5. Środki ochrony indywidualnej i techniczne środki kontroli pobierz z sekcji 8.
+6. Stan skupienia pobierz z sekcji 9.
+7. Datę aktualizacji i wersję KCh pobierz z nagłówka albo sekcji 16.
+8. Nie zgaduj. Brak danych oznacz jako null lub pustą tablicę.
+9. W warnings podaj niepewności i elementy wymagające ręcznej weryfikacji.
+10. Dla każdej grupy danych podaj stronę źródłową, jeżeli można ją ustalić.
 
 Zwróć dokładnie tę strukturę:
 {
@@ -93,11 +130,13 @@ Zwróć dokładnie tę strukturę:
   "physicalState": "Ciecz|Aerozol|Gaz|Ciało stałe|Pył",
   "hCodes": [],
   "euhCodes": [],
+  "sdsOrganisationalGuidance": [],
   "ppe": [],
   "technicalControls": [],
   "sourcePages": {
     "identity": null,
     "classification": null,
+    "organisationalGuidance": null,
     "ppe": null,
     "physicalState": null,
     "versionDate": null
@@ -110,26 +149,18 @@ async function copyText(text){
   if(navigator.clipboard && window.isSecureContext){await navigator.clipboard.writeText(text);return;}
   const area=document.createElement("textarea");area.value=text;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();const ok=document.execCommand("copy");area.remove();if(!ok)throw new Error("Kopiowanie zostało zablokowane.");
 }
-function openCopilot(){
-  const urls=["https://m365.cloud.microsoft/chat","https://copilot.cloud.microsoft/"];
-  const opened=window.open(urls[0],"_blank","noopener,noreferrer");
-  return Boolean(opened);
-}
+
 $("productPdf").addEventListener("change",()=>{
   const f=$("productPdf").files[0];
-  showPdfInfo(f?`<div class="notice warn">Wybrano: <b>${esc(f.name)}</b>. Dane możesz nadal wpisać ręcznie albo użyć „Analizuj z Copilot”.</div>`:"");
+  showPdfInfo(f?`<div class="notice warn">Wybrano plik: <b>${esc(f.name)}</b>. Plik pozostaje w tej przeglądarce. Dodaj go ręcznie jako załącznik w Copilot albo uzupełnij dane poniżej ręcznie.</div>`:"");
 });
+$("copilotPromptText").value=copilotPrompt;
 $("copyCopilotPromptButton").addEventListener("click",async()=>{
-  try{await copyText(copilotPrompt);showPdfInfo('<div class="notice ok">Prompt skopiowany do schowka.</div>')}catch(e){showPdfInfo(`<div class="notice err">${esc(e.message)}</div><textarea rows="14" readonly>${esc(copilotPrompt)}</textarea>`)}
+  const info=$("copilotPromptInfo");
+  try{await copyText(copilotPrompt);info.innerHTML='<div class="notice ok">Prompt skopiowany. Przejdź do Copilot, dodaj PDF i wklej prompt klawiszami Ctrl+V.</div>'}
+  catch(e){info.innerHTML=`<div class="notice err">Nie udało się skopiować automatycznie. Zaznacz tekst promptu i skopiuj go ręcznie. ${esc(e.message)}</div>`}
 });
-$("analyseWithCopilotButton").addEventListener("click",async()=>{
-  const f=$("productPdf").files[0];
-  if(!f){showPdfInfo('<div class="notice err">Najpierw wybierz kartę charakterystyki PDF. Możesz też pominąć PDF i wpisać dane ręcznie.</div>');return;}
-  if(f.type!=="application/pdf"&&!f.name.toLowerCase().endsWith(".pdf")){showPdfInfo('<div class="notice err">Wybrany plik nie jest dokumentem PDF.</div>');return;}
-  let copied=false;try{await copyText(copilotPrompt);copied=true}catch(e){console.warn(e)}
-  const opened=openCopilot();
-  showPdfInfo(`<div class="notice ${copied&&opened?"ok":"warn"}"><b>${copied?"Prompt skopiowano.":"Skopiuj prompt ręcznie z pola poniżej."}</b><ol><li>W otwartym Copilot kliknij ikonę załącznika i dodaj plik <b>${esc(f.name)}</b>.</li><li>Wklej prompt klawiszami <b>Ctrl+V</b>.</li><li>Wyślij wiadomość.</li><li>Skopiuj zwrócony JSON, wróć tutaj i użyj „Wczytaj dane z Copilot”.</li></ol>${opened?"":"Przeglądarka zablokowała nowe okno. Otwórz Microsoft 365 Copilot ręcznie."}</div>${copied?"":`<textarea rows="14" readonly>${esc(copilotPrompt)}</textarea>`}`);
-});
+
 function cleanJsonText(value){return String(value||"").trim().replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/\s*```$/i,"").trim()}
 function normalizeArray(value){return (Array.isArray(value)?value:String(value||"").split(/[;\n,]/)).map(x=>String(x).trim()).filter(Boolean)}
 function normalizeCodes(value,prefix){return [...new Set(normalizeArray(value).map(x=>x.toUpperCase()).filter(x=>prefix==="H"?/^H\d{3}[A-Z]{0,2}$/.test(x):/^EUH\d{3}[A-Z]?$/.test(x)))]}
@@ -141,7 +172,7 @@ $("applyCopilotResult").addEventListener("click",()=>{
   try{
     const data=JSON.parse(cleanJsonText($("copilotJson").value));
     if(!data||typeof data!=="object"||Array.isArray(data))throw new Error("Odpowiedź nie zawiera obiektu JSON.");
-    setField("productName",data.productName);setField("manufacturer",data.manufacturer);setField("kchVersion",data.sdsVersion);setField("kchDate",normalizeDate(data.revisionDate));setField("physicalState",normalizeState(data.physicalState));setField("hCodes",normalizeCodes(data.hCodes,"H").join(", "));setField("euhCodes",normalizeCodes(data.euhCodes,"EUH").join(", "));setField("ppeData",normalizeArray(data.ppe).join("\n"));setField("technicalData",normalizeArray(data.technicalControls).join("\n"));
+    setField("productName",data.productName);setField("manufacturer",data.manufacturer);setField("kchVersion",data.sdsVersion);setField("kchDate",normalizeDate(data.revisionDate));setField("physicalState",normalizeState(data.physicalState));setField("hCodes",normalizeCodes(data.hCodes,"H").join(", "));setField("euhCodes",normalizeCodes(data.euhCodes,"EUH").join(", "));setField("organisationData",normalizeArray(data.sdsOrganisationalGuidance).join("\n"));setField("ppeData",normalizeArray(data.ppe).join("\n"));setField("technicalData",normalizeArray(data.technicalControls).join("\n"));
     const warnings=normalizeArray(data.warnings);const pages=data.sourcePages&&typeof data.sourcePages==="object"?Object.entries(data.sourcePages).filter(([,v])=>v!==null&&v!=="").map(([k,v])=>`${k}: str. ${v}`):[];
     info.innerHTML=`<div class="notice ok"><b>Dane wczytano do formularza.</b> Sprawdź każde pole z KCh przed dodaniem produktu.${pages.length?`<br>Źródła: ${esc(pages.join(", "))}`:""}${warnings.length?`<br><b>Ostrzeżenia Copilot:</b><ul>${warnings.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}</div>`;
   }catch(e){info.innerHTML=`<div class="notice err">Nie udało się odczytać JSON: ${esc(e.message)}</div>`}
@@ -152,7 +183,7 @@ $("addProduct").addEventListener("click",()=>{const p={name:$("productName").val
 $("addJob").addEventListener("click",()=>{const j={name:$("jobName").value.trim(),location:$("jobLocation").value.trim(),workers:$("jobWorkers").value,description:$("jobDescription").value.trim()};if(!j.name){alert("Podaj nazwę stanowiska.");return}jobs.push(j);save("chemJobs",jobs);["jobName","jobLocation","jobWorkers","jobDescription"].forEach(id=>$(id).value="");renderAll()});
 $("addScenario").addEventListener("click",()=>{
  const num=id=>Number($(id).value);
- const s={name:$("scenarioName").value.trim(),description:$("scenarioDescription").value.trim(),method:$("scenarioMethod").value,containment:$("scenarioContainment").value,release:$("scenarioRelease").value,amountValue:num("scenarioAmountValue"),amountUnit:$("scenarioAmountUnit").value,operationMinutes:num("scenarioOperationMinutes"),operationsPerShift:num("scenarioOperationsPerShift"),daysPerWeek:num("scenarioDaysPerWeek"),temperature:num("scenarioTemperature"),vent:$("scenarioVent").value,levVerified:$("scenarioLevVerified").value==="yes",routes:{vapour:$("routeVapour").checked,aerosol:$("routeAerosol").checked,dust:$("routeDust").checked,skin:$("routeSkin").checked,eyes:$("routeEyes").checked,ingestion:$("routeIngestion").checked},skinArea:$("scenarioSkinArea").value,skinTime:$("scenarioSkinTime").value,ignition:$("scenarioIgnition").value,emergency:$("scenarioEmergency").value};
+ const s={name:$("scenarioName").value.trim(),description:$("scenarioDescription").value.trim(),method:$("scenarioMethod").value,containment:$("scenarioContainment").value,release:$("scenarioRelease").value,amountValue:num("scenarioAmountValue"),amountUnit:$("scenarioAmountUnit").value,operationMinutes:num("scenarioOperationMinutes"),operationsPerShift:num("scenarioOperationsPerShift"),daysPerWeek:num("scenarioDaysPerWeek"),temperature:num("scenarioTemperature"),vent:$("scenarioVent").value,levVerified:$("scenarioLevVerified").value==="yes",routes:{vapour:$("routeVapour").checked,aerosol:$("routeAerosol").checked,dust:$("routeDust").checked,skin:$("routeSkin").checked,eyes:$("routeEyes").checked,ingestion:$("routeIngestion").checked},skinArea:$("scenarioSkinArea").value,skinTime:$("scenarioSkinTime").value,ignition:$("scenarioIgnition").value,emergency:$("scenarioEmergency").value,organisational:{authorised:$("orgAuthorised").checked,training:$("orgTraining").checked,instruction:$("orgInstruction").checked,sdsAvailable:$("orgSdsAvailable").checked,peopleLimited:$("orgPeopleLimited").checked,noFood:$("orgNoFood").checked,handWash:$("orgHandWash").checked,gloveChange:$("orgGloveChange").checked,spillProcedure:$("orgSpillProcedure").checked,spillKit:$("orgSpillKit").checked,containersClosed:$("orgContainersClosed").checked,waste:$("orgWaste").checked,ventInspection:$("orgVentInspection").checked,ignitionControlled:$("orgIgnitionControlled").checked,storage:$("orgStorage").checked,emergency:$("orgEmergency").checked},additionalOrganisational:$("scenarioAdditionalOrg").value.trim()};
  if(!s.name){alert("Podaj nazwę scenariusza.");return} if(!(s.amountValue>0)){alert("Podaj ilość większą od zera.");return} if(!(s.operationMinutes>0)||!(s.operationsPerShift>0)){alert("Podaj czas i liczbę operacji większe od zera.");return} if(!Object.values(s.routes).some(Boolean)){alert("Wybierz co najmniej jedną drogę narażenia.");return}
  scenarios.push(s);save("chemScenarios",scenarios);$("scenarioName").value="";$("scenarioDescription").value="";renderAll();
 });
@@ -169,8 +200,11 @@ $("generateAssessment").addEventListener("click",()=>{
  const inhalationActive=s.routes?.vapour||s.routes?.aerosol||s.routes?.dust; const inhalation=inhalationActive?hs*((state+release+duration)/3)*containment*vent*frequency:0;
  const skinArea={"Brak przewidywanego kontaktu":0,"Mała: krople / końcówki palców":1,"Średnia: jedna lub obie dłonie":2,"Duża: dłonie, przedramiona lub większa powierzchnia":3}[s.skinArea]||0; const skinTime={"Usuwane natychmiast":0.5,"Do 15 min":1,"15-60 min":2,"Powyżej 60 min":3}[s.skinTime]||0.5; const skin=(s.routes?.skin||s.routes?.eyes)?hs*(skinArea+skinTime)/2:0;
  const flammable=selected.some(p=>/H22[0-9]|H280|H281/.test((p.h||"").toUpperCase())); const ignition={"Brak / wyeliminowane":0.5,"Możliwe":1,"Obecne w pobliżu procesu":1.5}[s.ignition]||0.5; const fire=flammable?release*ignition*(s.containment==="Proces otwarty"?1.3:0.8):0;
+ const orgLabels={authorised:"Dostęp ograniczony",training:"Szkolenie pracowników",instruction:"Instrukcja pracy",sdsAvailable:"Dostęp do KCh",peopleLimited:"Ograniczenie liczby osób",noFood:"Zakaz jedzenia, picia i palenia",handWash:"Możliwość mycia rąk",gloveChange:"Zasady wymiany rękawic",spillProcedure:"Procedura rozlania",spillKit:"Zestaw sorpcyjny",containersClosed:"Zamykanie pojemników",waste:"Oznakowane odpady",ventInspection:"Aktualny przegląd wentylacji",ignitionControlled:"Kontrola źródeł zapłonu",storage:"Zasady przechowywania",emergency:"Postępowanie awaryjne"};
+ const requiredOrg=["training","instruction","sdsAvailable","noFood","handWash","spillProcedure","waste","emergency"]; if((s.vent||"").includes("miejscowa"))requiredOrg.push("ventInspection"); if(flammable)requiredOrg.push("ignitionControlled","storage");
+ const implemented=Object.entries(s.organisational||{}).filter(([,v])=>v).map(([k])=>orgLabels[k]); const missing=requiredOrg.filter(k=>!s.organisational?.[k]).map(k=>orgLabels[k]); const orgStatus=missing.length?"🟠 Wymaga uzupełnienia":"🟢 Minimalne wymagania potwierdzone";
  const lvl=x=>x>15?"🔴 Wysokie":x>8?"🟠 Istotne":x>3?"🟡 Średnie":"🟢 Niskie"; const routes=Object.entries(s.routes||{}).filter(([,v])=>v).map(([k])=>({vapour:"pary/gazy",aerosol:"aerozol",dust:"pył",skin:"skóra",eyes:"oczy",ingestion:"połknięcie"}[k])).join(", ");
- $("assessmentResult").innerHTML=`<div class="card result"><h3>Wynik oceny według modułów</h3><p><b>Stanowisko:</b> ${esc(j.name)}<br><b>Scenariusz:</b> ${esc(s.name)}<br><b>Produkty:</b> ${selected.map(x=>esc(x.name)).join(", ")}</p><div class="grid"><div class="notice"><b>Inhalacja</b><h2>${inhalationActive?lvl(inhalation):"Nie dotyczy"}</h2>${inhalationActive?`Wynik pomocniczy: ${inhalation.toFixed(2)}`:"Nie zaznaczono drogi inhalacyjnej."}</div><div class="notice"><b>Skóra i oczy</b><h2>${(s.routes?.skin||s.routes?.eyes)?lvl(skin):"Nie dotyczy"}</h2>${(s.routes?.skin||s.routes?.eyes)?`Wynik pomocniczy: ${skin.toFixed(2)}`:"Nie zaznaczono kontaktu."}</div><div class="notice"><b>Pożar / wybuch</b><h2>${flammable?lvl(fire):"Brak rozpoznanych H palności"}</h2>${flammable?`Wynik pomocniczy: ${fire.toFixed(2)}`:"Zweryfikuj sekcje 2, 7 i 9 KCh."}</div></div><p><b>Ilość na operację:</b> ${esc(s.amountValue)} ${esc(s.amountUnit)}<br><b>Ekspozycja:</b> ${totalMinutes} min/zmianę, ${esc(s.daysPerWeek)} dni/tydzień<br><b>Proces:</b> ${esc(s.containment)}<br><b>Wentylacja:</b> ${esc(s.vent)}${(s.vent||"").includes("miejscowa")?`, skuteczność potwierdzona: ${s.levVerified?"tak":"nie"}`:""}<br><b>Drogi narażenia:</b> ${esc(routes||"nie wskazano")}</p><p><b>H:</b> ${selected.map(x=>esc(x.h)).filter(Boolean).join("; ")||"brak"}</p><p><b>ŚOI z KCh:</b> ${selected.map(x=>esc(x.ppe)).filter(Boolean).join("; ")||"brak danych"}</p><div class="notice warn">To wynik przesiewowy. Nie zastępuje porównania z NDS/NDSCh, pomiarów narażenia, oceny skuteczności wentylacji ani osobnej analizy ATEX. Wymaga zatwierdzenia przez osobę wykonującą ocenę.</div></div>`;
+ $("assessmentResult").innerHTML=`<div class="card result"><h3>Wynik oceny według modułów</h3><p><b>Stanowisko:</b> ${esc(j.name)}<br><b>Scenariusz:</b> ${esc(s.name)}<br><b>Produkty:</b> ${selected.map(x=>esc(x.name)).join(", ")}</p><div class="grid"><div class="notice"><b>Inhalacja</b><h2>${inhalationActive?lvl(inhalation):"Nie dotyczy"}</h2>${inhalationActive?`Wynik pomocniczy: ${inhalation.toFixed(2)}`:"Nie zaznaczono drogi inhalacyjnej."}</div><div class="notice"><b>Skóra i oczy</b><h2>${(s.routes?.skin||s.routes?.eyes)?lvl(skin):"Nie dotyczy"}</h2>${(s.routes?.skin||s.routes?.eyes)?`Wynik pomocniczy: ${skin.toFixed(2)}`:"Nie zaznaczono kontaktu."}</div><div class="notice"><b>Pożar / wybuch</b><h2>${flammable?lvl(fire):"Brak rozpoznanych H palności"}</h2>${flammable?`Wynik pomocniczy: ${fire.toFixed(2)}`:"Zweryfikuj sekcje 2, 7 i 9 KCh."}</div></div><p><b>Ilość na operację:</b> ${esc(s.amountValue)} ${esc(s.amountUnit)}<br><b>Ekspozycja:</b> ${totalMinutes} min/zmianę, ${esc(s.daysPerWeek)} dni/tydzień<br><b>Proces:</b> ${esc(s.containment)}<br><b>Wentylacja:</b> ${esc(s.vent)}${(s.vent||"").includes("miejscowa")?`, skuteczność potwierdzona: ${s.levVerified?"tak":"nie"}`:""}<br><b>Drogi narażenia:</b> ${esc(routes||"nie wskazano")}</p><p><b>H:</b> ${selected.map(x=>esc(x.h)).filter(Boolean).join("; ")||"brak"}</p><p><b>Zalecenia organizacyjne i higieniczne z KCh:</b><br>${selected.map(x=>esc(x.organisation)).filter(Boolean).join("<br>")||"brak danych"}</p><p><b>Status środków organizacyjnych:</b> ${orgStatus}</p><p><b>Potwierdzone na stanowisku:</b><br>${implemented.length?implemented.map(x=>"• "+esc(x)).join("<br>"):"Nie potwierdzono żadnego środka."}</p><p><b>Braki do uzupełnienia:</b><br>${missing.length?missing.map(x=>"• "+esc(x)).join("<br>"):"Nie stwierdzono braków w minimalnej liście kontrolnej."}</p>${s.additionalOrganisational?`<p><b>Inne środki:</b> ${esc(s.additionalOrganisational)}</p>`:""}<p><b>ŚOI z KCh:</b> ${selected.map(x=>esc(x.ppe)).filter(Boolean).join("; ")||"brak danych"}</p><div class="notice warn">To wynik przesiewowy. Nie zastępuje porównania z NDS/NDSCh, pomiarów narażenia, oceny skuteczności wentylacji ani osobnej analizy ATEX. Wymaga zatwierdzenia przez osobę wykonującą ocenę.</div></div>`;
 });
 function renderAll(){$("productCount").textContent=products.length;$("jobCount").textContent=jobs.length;$("scenarioCount").textContent=scenarios.length;$("reviewCount").textContent=products.filter(p=>!p.date||(Date.now()-new Date(p.date).getTime())/31557600000>=5).length;$("productTable").innerHTML=products.map((p,i)=>`<tr><td>${esc(p.name)}</td><td>${esc(p.manufacturer)}</td><td>${esc(p.state)}</td><td>${esc(p.version)}</td><td>${esc(p.date)}</td><td>${esc([p.h,p.e].filter(Boolean).join(", "))}</td><td><button class="danger" data-del="p" data-i="${i}">Usuń</button></td></tr>`).join("");$("jobTable").innerHTML=jobs.map((j,i)=>`<tr><td>${esc(j.name)}</td><td>${esc(j.location)}</td><td>${esc(j.workers)}</td><td><button class="danger" data-del="j" data-i="${i}">Usuń</button></td></tr>`).join("");$("scenarioTable").innerHTML=scenarios.map((s,i)=>{const rt=Object.entries(s.routes||{}).filter(([,v])=>v).map(([k])=>({vapour:"pary",aerosol:"aerozol",dust:"pył",skin:"skóra",eyes:"oczy",ingestion:"połknięcie"}[k])).join(", ");const mins=(s.operationMinutes||0)*(s.operationsPerShift||0);return `<tr><td>${esc(s.name)}</td><td>${esc(s.method||"")}</td><td>${esc(s.containment||"")}</td><td>${esc(s.amountValue||"")} ${esc(s.amountUnit||"")}</td><td>${mins?mins+" min":"brak"}</td><td>${esc(s.vent||"")}</td><td>${esc(rt||"brak")}</td><td><button class="danger" data-del="s" data-i="${i}">Usuń</button></td></tr>`}).join("");$("assessmentJob").innerHTML=jobs.map((x,i)=>`<option value="${i}">${esc(x.name)}</option>`).join("");$("assessmentScenario").innerHTML=scenarios.map((x,i)=>`<option value="${i}">${esc(x.name)}</option>`).join("");$("productSelection").innerHTML=products.length?products.map((x,i)=>`<label><input class="prod-check" type="checkbox" value="${i}"> ${esc(x.name)}</label>`).join(""):'<div class="notice warn">Najpierw dodaj produkt.</div>'}
 renderAll();
