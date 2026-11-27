@@ -13,8 +13,49 @@ const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,
 const load=k=>{try{return JSON.parse(localStorage.getItem(k))||[]}catch{return[]}},save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));let products=load('chemProducts'),jobs=load('chemJobs'),scenarios=load('chemScenarios'),last=null;
 const orgLabels={training:'Szkolenie pracowników',instruction:'Instrukcja pracy',sds:'Dostęp do KCh',noFood:'Zakaz jedzenia, picia i palenia',wash:'Możliwość mycia rąk',spill:'Procedura rozlania',waste:'Oznakowane odpady',emergency:'Postępowanie awaryjne',vent:'Aktualny przegląd wentylacji',ignition:'Kontrola źródeł zapłonu',storage:'Zasady przechowywania',access:'Dostęp ograniczony',gloves:'Zasady wymiany rękawic'};Object.entries(orgLabels).forEach(([k,v])=>$('org').insertAdjacentHTML('beforeend',`<label><input type="checkbox" data-org="${k}">${v}</label>`));
 $('nav').onclick=e=>{const b=e.target.closest('[data-page]');if(!b)return;document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===b.dataset.page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));render()};
-const prompt=`Przeanalizuj załączoną kartę charakterystyki. Zwróć wyłącznie JSON: {"productName":"","manufacturer":"","sdsVersion":"","revisionDate":"YYYY-MM-DD","physicalState":"","hCodes":[],"euhCodes":[],"sdsOrganisationalGuidance":[],"ppe":[],"technicalControls":[],"warnings":[]}. H i EUH pobierz przede wszystkim z sekcji 2, nie ze składników sekcji 3. Organizację i higienę z sekcji 7, ŚOI i technikę z sekcji 8, stan z sekcji 9, datę i wersję z nagłówka lub sekcji 16. Nie zgaduj.`;$('prompt').value=prompt;$('copyPrompt').onclick=async()=>{try{await navigator.clipboard.writeText(prompt);alert('Prompt skopiowany.')}catch{ $('prompt').select();document.execCommand('copy')}};
-$('applyJson').onclick=()=>{try{let t=$('cj').value.trim().replace(/^```json\s*/i,'').replace(/```$/,'');const d=JSON.parse(t),set=(id,v)=>{if(v!==null&&v!==undefined&&v!=='')$(id).value=Array.isArray(v)?v.join('\n'):v};set('pn',d.productName);set('pm',d.manufacturer);set('pv',d.sdsVersion);set('pd',d.revisionDate);set('ps',d.physicalState);set('ph',d.hCodes?.join(', '));set('pe',d.euhCodes?.join(', '));set('po',d.sdsOrganisationalGuidance);set('pp',d.ppe);set('pt',d.technicalControls);$('ci').innerHTML='<div class="notice ok">Dane wczytano. Sprawdź je z KCh.</div>'}catch(e){$('ci').innerHTML=`<div class="notice err">Błędny JSON: ${esc(e.message)}</div>`}};
+const prompt=`Przeanalizuj załączoną kartę charakterystyki (KCh/SDS) i zwróć wyłącznie poprawny JSON, bez komentarza, bez objaśnień przed lub po JSON i bez bloków Markdown.
+
+ZASADY ODCZYTU:
+1. Nazwę produktu, producenta lub dostawcę pobierz z sekcji 1. Jeżeli występuje producent i osobny polski dystrybutor, producenta wpisz w manufacturer, a informację o dystrybutorze dodaj do warnings.
+2. Odczytaj CAŁĄ klasyfikację produktu lub mieszaniny z sekcji 2.1 oraz wszystkie elementy oznakowania z sekcji 2.2.
+3. Do hCodes wpisz wszystkie unikalne kody H dotyczące całego produktu, które występują w sekcji 2.1 LUB 2.2. Uwzględnij także kod obecny tylko przy klasie zagrożenia w sekcji 2.1, nawet jeżeli nie został powtórzony w wykazie zwrotów w sekcji 2.2.
+4. Do euhCodes wpisz wszystkie unikalne zwroty EUH dotyczące produktu z sekcji 2.2.
+5. Nie pobieraj do hCodes ani euhCodes kodów dotyczących wyłącznie składników z sekcji 3. Sekcję 16 wykorzystuj tylko pomocniczo do rozwinięcia treści kodów już przypisanych produktowi w sekcji 2, a nie do dodawania nowych kodów.
+6. Zachowaj pełne warianty kodów z literami, np. H350i, H360F, H360D, H360FD, H361f, H361d i H361fd. Zwróć kody wielkimi literami, bez duplikatów.
+7. Zalecenia organizacyjne, higieniczne, bezpieczne postępowanie i magazynowanie pobierz z sekcji 7, pomocniczo z sekcji 8. Nie twórz informacji o organizacji zakładu, których nie ma w KCh.
+8. Środki ochrony indywidualnej pobierz z sekcji 8.2. Podaj konkretnie rodzaj ochrony, materiał rękawic, grubość, czas przebicia, typ filtra i normę, jeżeli są podane.
+9. Techniczne środki kontroli pobierz z sekcji 8.2, np. wentylację ogólną, odciąg miejscowy, układ zamknięty lub utrzymywanie stężeń poniżej NDS/NDSCh.
+10. Stan skupienia produktu pobierz z sekcji 9. Jeżeli produkt jest aerozolem, a zawartość jest cieczą, physicalState ustaw na "Aerozol" i opisz rozbieżność w warnings.
+11. Datę aktualizacji i wersję KCh pobierz z nagłówka albo sekcji 16. Datę zwróć w formacie YYYY-MM-DD.
+12. Nie zgaduj. Brak danych oznacz jako null albo pustą tablicę.
+13. W warnings podaj rozbieżności, dane niepewne, brakujące sekcje oraz elementy wymagające ręcznej weryfikacji.
+14. Dla każdej grupy danych podaj stronę źródłową, jeżeli można ją ustalić.
+15. Przed zwróceniem JSON sprawdź ponownie sekcje 2.1 i 2.2 i upewnij się, że nie pominięto żadnego kodu H lub EUH dotyczącego całego produktu.
+
+Zwróć dokładnie tę strukturę:
+{
+  "productName": "",
+  "manufacturer": "",
+  "sdsVersion": "",
+  "revisionDate": "YYYY-MM-DD",
+  "physicalState": "Ciecz|Aerozol|Gaz|Ciało stałe|Pył",
+  "hCodes": [],
+  "euhCodes": [],
+  "sdsOrganisationalGuidance": [],
+  "ppe": [],
+  "technicalControls": [],
+  "sourcePages": {
+    "identity": null,
+    "classification": null,
+    "organisationalGuidance": null,
+    "ppe": null,
+    "technicalControls": null,
+    "physicalState": null,
+    "versionDate": null
+  },
+  "warnings": []
+}`;$('prompt').value=prompt;$('copyPrompt').onclick=async()=>{try{await navigator.clipboard.writeText(prompt);alert('Prompt skopiowany.')}catch{ $('prompt').select();document.execCommand('copy')}};
+$('applyJson').onclick=()=>{try{let t=$('cj').value.trim().replace(/^```json\s*/i,'').replace(/```$/,'');const d=JSON.parse(t),set=(id,v)=>{if(v!==null&&v!==undefined&&v!=='')$(id).value=Array.isArray(v)?v.join('\n'):v};set('pn',d.productName);set('pm',d.manufacturer);set('pv',d.sdsVersion);set('pd',d.revisionDate);set('ps',d.physicalState);set('ph',[...new Set((Array.isArray(d.hCodes)?d.hCodes:String(d.hCodes||'').split(/[,;\n]/)).map(x=>String(x).trim().toUpperCase()).filter(x=>/^H\d{3}[A-Z]{0,2}$/.test(x)))].join(', '));set('pe',[...new Set((Array.isArray(d.euhCodes)?d.euhCodes:String(d.euhCodes||'').split(/[,;\n]/)).map(x=>String(x).trim().toUpperCase()).filter(x=>/^EUH\d{3}[A-Z]?$/.test(x)))].join(', '));set('po',d.sdsOrganisationalGuidance);set('pp',d.ppe);set('pt',d.technicalControls);$('ci').innerHTML='<div class="notice ok">Dane wczytano. Sprawdź je z KCh.</div>'}catch(e){$('ci').innerHTML=`<div class="notice err">Błędny JSON: ${esc(e.message)}</div>`}};
 $('addP').onclick=()=>{const p={name:$('pn').value.trim(),manufacturer:$('pm').value.trim(),state:$('ps').value,version:$('pv').value,date:$('pd').value,h:$('ph').value,e:$('pe').value,ppe:$('pp').value,technical:$('pt').value,organisation:$('po').value};if(!p.name)return alert('Podaj nazwę.');products.push(p);save('chemProducts',products);render()};
 $('addJ').onclick=()=>{const j={name:$('jn').value.trim(),location:$('jl').value,workers:$('jw').value,description:$('jd').value};if(!j.name)return alert('Podaj nazwę.');jobs.push(j);save('chemJobs',jobs);render()};
 $('addS').onclick=()=>{const routes={vapour:$('rv').checked,aerosol:$('ra').checked,dust:$('rd').checked,skin:$('rs').checked,eyes:$('re').checked,ingestion:$('ri').checked};if(!Object.values(routes).some(Boolean))return alert('Wybierz drogę narażenia.');const org={};document.querySelectorAll('[data-org]').forEach(x=>org[x.dataset.org]=x.checked);const s={name:$('sn').value.trim(),method:$('sm').value,description:$('sd').value,containment:$('scon').value,release:$('sr').value,amountValue:+$('sav').value,amountUnit:$('sau').value,operationMinutes:+$('smin').value,operationsPerShift:+$('sops').value,daysPerWeek:+$('sdays').value,temperature:+$('stemp').value,vent:$('svent').value,levVerified:$('slev').value==='yes',routes,skinArea:$('ssa').value,skinTime:$('sst').value,ignition:$('sig').value,emergency:$('sem').value,organisational:org,additionalOrganisational:$('so').value};if(!s.name||s.amountValue<=0)return alert('Podaj nazwę i ilość.');scenarios.push(s);save('chemScenarios',scenarios);render()};
